@@ -12,7 +12,7 @@ __lua__
 function _init()
  t=0
  dt=1/30
- stars={}
+ stars=make_starfield(100)
  particles={}
  bullets={}
  ship=make_ship()
@@ -23,15 +23,16 @@ function _update()
  update_ship()
  foreach(bullets,update_bullet)
  foreach(particles,update_particle)
+ foreach(stars,update_star)
  if btnp(⬆️) then muzzel_flash(64,64) end
 end
 
 function _draw()
  cls()
+ foreach(stars,draw_star)
  draw_ship()
  foreach(particles,draw_particle)
  foreach(bullets,draw_bullet)
-
 end
 
 function make_ship()
@@ -194,27 +195,32 @@ function muzzel_flash(x,y)
 end
 
 -- starfield
+
+layer_vel={0.5,3}
+layer_col={1,5}
+
 function make_starfield(n)
  local starfield={}
- for i=1,5 do
+ for i=1,n do
   local s={}
   s.x=rnd(128)
   s.y=rnd(128)
-  s.layer=flr(rnd(3))+1
+  s.layer=flr(rnd(2))+1
   add(starfield,s)
  end
  return starfield
 end
 
 function update_star(s)
- local layer_vel={0.5,1,1.5}
  local layer=s.layer
- s.y+=layer_vel[layer]
+ s.y+=rnd(10)
+ if s.y>127 then s.y=0 end
 end
 
 function draw_star(s)
- local layer_col={5,13,6}
  local layer=s.layer
+ local prev_y_pos=s.y+layer_vel[layer]
+ line(s.x,s.y,s.x,prev_y_pos,layer_col[layer])
 end
 __gfx__
 00000000020008000800008000800020000000000000a000000090000000a0000000a0000000a000000000000000000000000000000000000000000000000000
