@@ -169,6 +169,7 @@ function draw_particle(p)
  circfill(p.x,p.y,radius,p.col_tbl[i])
 end
 
+-- particle effects
 function sparkle_trail(x,y)
  add_particle(
   x,y,2,
