@@ -106,8 +106,8 @@ function draw_ship()
  
  -- engine sprite
  local frames={6,7,8,9}
- local ticks_per_frame = 3
- local i=flr(t/ticks_per_frame%#frames+1)
+ local ticks_per_frame=3
+ local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],ship.x-3+left_offset,ship.y+8)
  spr(frames[i],ship.x+2+right_offset,ship.y+8)
 end
