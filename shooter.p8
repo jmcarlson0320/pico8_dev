@@ -3,7 +3,6 @@ version 41
 __lua__
 -- shmup
 -- todo
--- -starfield
 -- -ui lives and score
 -- -game states
 -- -fire rate
@@ -12,7 +11,8 @@ __lua__
 function _init()
  t=0
  dt=1/30
- stars=make_starfield(100)
+ stars=make_starfield(30)
+ star_colors={1,5}
  particles={}
  bullets={}
  ship=make_ship()
@@ -24,7 +24,9 @@ function _update()
  foreach(bullets,update_bullet)
  foreach(particles,update_particle)
  foreach(stars,update_star)
- if btnp(⬆️) then muzzel_flash(64,64) end
+ if btnp(⬆️) then
+  muzzel_flash(64,64)
+ end
 end
 
 function _draw()
@@ -34,6 +36,9 @@ function _draw()
  foreach(particles,draw_particle)
  foreach(bullets,draw_bullet)
 end
+
+
+-- player ship
 
 function make_ship()
  local s={}
@@ -64,10 +69,15 @@ function update_ship()
  end
 
  -- limit max speed
- ship.dx=mid(-ship.maxspd,ship.dx,ship.maxspd)
+ ship.dx=mid(
+  -ship.maxspd,
+  ship.dx,
+  ship.maxspd
+ )
  
  -- decellerate when not turning
- if not btn(0) and not btn(1) then
+ if not btn(0) and
+    not btn(1) then
   ship.dir="straight"
   if ship.dx<-10 then
    ship.dx+=ship.decel*dt
@@ -114,6 +124,9 @@ function draw_ship()
  spr(frames[i],ship.x+2+right_offset,ship.y+8)
 end
 
+
+-- bullets
+
 function make_bullet(x,y)
  local b={}
  b.x=x
@@ -124,13 +137,18 @@ end
 
 function update_bullet(b)
  b.y+=b.dy*dt
- if b.y<0 then del(bullets,b) end
+ if b.y<0 then
+  del(bullets,b)
+ end
  sparkle_trail(b.x,b.y+4)
 end
 
 function draw_bullet(b)
  spr(5,b.x-4,b.y-8)
 end
+
+
+-- particle system
 
 function add_particle(
  x,y,spread,
@@ -167,7 +185,7 @@ end
 function draw_particle(p)
  local num_col=#p.col_tbl
  local i=flr(p.age/p.lifetime*num_col)+1
- local radius=p.rad-flr(p.age/p.lifetime*p.rad)
+ local radius=p.rad-flr(p.age/p.lifetime*p.rad)-1
  circfill(p.x,p.y,radius,p.col_tbl[i])
 end
 
@@ -175,18 +193,18 @@ end
 function sparkle_trail(x,y)
  add_particle(
   x,y,2,
-  0,
+  2,
   false,false,
   rnd(0.6)-0.3,-0.3,
   5,35,
-  {7,6,5,13,1,1,1,7,13,1,1,1}
+  {7,10,9,8,2,2,2,2,7,2,2,2}
  )
 end
 
 function muzzel_flash(x,y)
  add_particle(
   x,y,0,
-  5,
+  6,
   true,false,
   0,0,
   3,3,
@@ -194,10 +212,9 @@ function muzzel_flash(x,y)
  )
 end
 
+
 -- starfield
 
-layer_vel={0.5,3}
-layer_col={1,5}
 
 function make_starfield(n)
  local starfield={}
@@ -206,21 +223,21 @@ function make_starfield(n)
   s.x=rnd(128)
   s.y=rnd(128)
   s.layer=flr(rnd(2))+1
+  s.dy=s.layer
   add(starfield,s)
  end
  return starfield
 end
 
 function update_star(s)
- local layer=s.layer
- s.y+=rnd(10)
+ s.y+=s.dy
  if s.y>127 then s.y=0 end
 end
 
 function draw_star(s)
- local layer=s.layer
- local prev_y_pos=s.y+layer_vel[layer]
- line(s.x,s.y,s.x,prev_y_pos,layer_col[layer])
+ local prev_y_pos=s.y-s.dy
+ local col=star_colors[s.layer]
+ line(s.x,s.y,s.x,prev_y_pos,col)
 end
 __gfx__
 00000000020008000800008000800020000000000000a000000090000000a0000000a0000000a000000000000000000000000000000000000000000000000000
