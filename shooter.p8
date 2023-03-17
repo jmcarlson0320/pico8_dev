@@ -3,13 +3,14 @@ version 41
 __lua__
 -- main
 -- todo
--- fire rate
 -- enemies
 -- collision
 -- weapon types
 
 function _init()
  t=0
+ last_shot_time=t
+ b_cooldwn=4
  dt=1/30
  ship=make_ship()
  stars=make_starfield(40)
@@ -23,6 +24,7 @@ end
 
 function _update()
  t+=1
+ update_btn_state()
  _upd()
 end
 
@@ -87,11 +89,14 @@ function update_ship()
  ship.x=mid(0,ship.x,120)
  
  -- fire bullet
- if btnp(4) or btnp(5) then
-  make_bullet(ship.x+1,ship.y+8)
-  make_bullet(ship.x+6,ship.y+8)
-  muzzel_flash(ship.x+1,ship.y-1)
-  muzzel_flash(ship.x+6,ship.y-1)
+ if btn(4) or btn(5) then
+  if t-last_shot_time>b_cooldwn then
+   make_bullet(ship.x+1,ship.y+8)
+   make_bullet(ship.x+6,ship.y+8)
+   muzzel_flash(ship.x+1,ship.y-1)
+   muzzel_flash(ship.x+6,ship.y-1)
+   last_shot_time=t  
+  end 
  end
 end
 
@@ -237,6 +242,43 @@ function draw_ui(x,y)
   spr(20,x+0+offset,y+0)
  end
  print(score,x+50,y,7)
+end
+
+
+-- user input
+prev_btn_state={
+ [0]=false,
+ [1]=false,
+ [2]=false,
+ [3]=false,
+ [4]=false,
+ [5]=false
+}
+
+cur_btn_state={
+ [0]=false,
+ [1]=false,
+ [2]=false,
+ [3]=false,
+ [4]=false,
+ [5]=false
+}
+
+function update_btn_state()
+ for b=0,6 do
+  prev_btn_state[b]=cur_btn_state[b]
+  cur_btn_state[b]=btn(b)
+ end
+end
+
+function pressed(b)
+ return not prev_btn_state[b] 
+        and cur_btn_state[b]
+end
+
+function released(b)
+ return prev_btn_state[b] and
+    not cur_btn_state[b]
 end
 -->8
 -- title
