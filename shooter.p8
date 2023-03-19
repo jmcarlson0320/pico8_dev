@@ -7,7 +7,6 @@ __lua__
 -- explosion
 -- enemy types
 -- weapon types
-
 function _init()
  t=0
  time_of_last_shot=t
@@ -34,10 +33,6 @@ function _draw()
  _drw()
 end
 
-
-
-
-
 -- bullet
 function make_bullet(x,y)
  local b={}
@@ -59,8 +54,7 @@ function draw_bullet(b)
  spr(10,b.x-4,b.y-8)
 end
 
-
--- particle system
+--particles
 function add_particle(
  x,y,spread,
  radius,
@@ -68,7 +62,7 @@ function add_particle(
  dx,dy,
  life_min,life_max,
  colors
-)
+ )
  local p={}
  p.x=x+rnd(2*spread)-spread
  p.y=y+rnd(2*spread)-spread
@@ -100,30 +94,28 @@ function draw_particle(p)
  circfill(p.x,p.y,radius,p.col_tbl[i])
 end
 
-
--- particle effects
+--particle effects
 function missle_trail(x,y)
  add_particle(
-  x,y,2,
-  2,
-  false,false,
-  rnd(0.6)-0.3,-0.3,
-  5,35,
-  {7,7,10,9,8,4,4,4,7,5,5,5}
+ x,y,2,
+ 2,
+ false,false,
+ rnd(0.6)-0.3,-0.3,
+ 5,35,
+ {7,7,10,9,8,4,4,4,7,5,5,5}
  )
 end
 
 function muzzel_flash(x,y)
  add_particle(
-  x,y,0,
-  6,
-  true,false,
-  0,0,
-  3,3,
-  {7}
+ x,y,0,
+ 6,
+ true,false,
+ 0,0,
+ 3,3,
+ {7}
  )
 end
-
 
 -- starfield
 function make_starfield(n)
@@ -150,7 +142,6 @@ function draw_star(s)
  line(s.x,s.y,s.x,prev_y_pos,col)
 end
 
-
 -- ui
 function draw_ui(x,y)
  for i=1,lives do
@@ -159,7 +150,6 @@ function draw_ui(x,y)
  end
  print(score,x+50,y,7)
 end
-
 
 -- user input
 prev_btn_state={
@@ -189,12 +179,12 @@ end
 
 function pressed(b)
  return not prev_btn_state[b] 
-        and cur_btn_state[b]
+ and cur_btn_state[b]
 end
 
 function released(b)
  return prev_btn_state[b] and
-    not cur_btn_state[b]
+ not cur_btn_state[b]
 end
 -->8
 -- title
@@ -278,7 +268,7 @@ function add_enemy(
  x,y,
  hp,
  sprite
-)
+ )
  local e={}
  e.x=x
  e.y=y
@@ -308,7 +298,7 @@ function drift(amp,per,pha)
  return amp*sin(t/per+pha)
 end
 -->8
--- player ship
+--ship
 function make_ship()
  local s={}
  s.x=60
@@ -339,14 +329,14 @@ function update_ship()
 
  -- limit max speed
  ship.dx=mid(
-  -ship.maxspd,
-  ship.dx,
-  ship.maxspd
+ -ship.maxspd,
+ ship.dx,
+ ship.maxspd
  )
- 
+
  -- decellerate when not turning
  if not btn(0) and
-    not btn(1) then
+ not btn(1) then
   ship.dir="straight"
   if ship.dx<-10 then
    ship.dx+=ship.decel*dt
@@ -356,13 +346,13 @@ function update_ship()
    ship.dx=0
   end
  end
-  
+
  -- change position
  ship.x+=ship.dx*dt
- 
+
  -- clamp to screen
  ship.x=mid(0,ship.x,120)
- 
+
  -- fire bullet
  if pressed(4) or pressed(5) then
   if t-time_of_last_shot>b_cooldwn then
@@ -387,7 +377,7 @@ function draw_ship()
  elseif ship.dir=="left" then
   right_offset=-1
  end
- 
+
  -- engine sprite
  local frames={6,7,8,9}
  local ticks_per_frame=3
