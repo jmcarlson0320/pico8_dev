@@ -39,6 +39,12 @@ function make_bullet(x,y)
  b.x=x
  b.y=y
  b.dy=-100
+ b.hitbox={
+  x0=3,
+  y0=0,
+  x1=4,
+  y1=2
+ }
  add(bullets,b)
 end
 
@@ -47,11 +53,12 @@ function update_bullet(b)
  if b.y<0 then
   del(bullets,b)
  end
- missle_trail(b.x,b.y+3)
+ missle_trail(b.x+4,b.y+10)
 end
 
 function draw_bullet(b)
- spr(10,b.x-4,b.y-8)
+spr(10,b.x,b.y)
+draw_hitbox(b)
 end
 
 --particles
@@ -189,6 +196,22 @@ function released(b)
  return prev_btn_state[b] and
  not cur_btn_state[b]
 end
+
+--collision
+function draw_hitbox(o)
+ local h=o.hitbox
+ rect(o.x+h.x0,o.y+h.y0,o.x+h.x1,o.y+h.y1,8)
+end
+
+function has_collided(a,b)
+ local ha=a.hitbox
+ local hb=b.hitbox
+ if a.y+ha.y0>b.y+hb.y1 then return false end
+ if b.y+hb.y0>a.y+ha.y1 then return false end
+ if a.x+ha.x1<b.x+hb.x0 then return false end
+ if b.x+hb.x1<a.x+ha.x0 then return false end
+ return true
+end
 -->8
 -- title
 function init_title()
@@ -234,6 +257,13 @@ function update_play()
  if lives<=0 then
   init_gameover()
  end
+ for b in all(bullets) do
+  for e in all(enemies) do
+   if has_collided(b,e) then
+    sfx(0)
+   end
+  end
+ end
 end
 
 function draw_play()
@@ -244,7 +274,6 @@ function draw_play()
  foreach(bullets,draw_bullet)
  foreach(enemies,draw_enemy)
  draw_ui(4,4)
- pset(64,20,7)
 end
 -->8
 -- gameover
@@ -276,6 +305,12 @@ function add_intercepter(x,y)
  e.score=10
  e.sprite=65
  e.drift=slow_drift()
+ e.hitbox={
+  x0=1,
+  y0=0,
+  x1=6,
+  y1=3
+ }
  add(enemies,e)
 end
 
@@ -292,7 +327,7 @@ function draw_enemy(e)
  local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],e.x,e.y-7)
  spr(e.sprite,e.x,e.y)
- pset(e.x,e.y,10)
+ draw_hitbox(e)
 end
 
 function drift(e)
@@ -367,10 +402,10 @@ function update_ship()
  -- fire bullet
  if pressed(4) or pressed(5) then
   if t-time_of_last_shot>b_cooldwn then
-   make_bullet(ship.x+1,ship.y+8)
-   make_bullet(ship.x+6,ship.y+8)
+   make_bullet(ship.x-4,ship.y)
+   make_bullet(ship.x+4,ship.y)
+
    muzzel_flash(ship.x+1,ship.y-1)
-   muzzel_flash(ship.x+6,ship.y-1)
    time_of_last_shot=t  
   end 
  end
@@ -459,3 +494,5 @@ __gfx__
 00999000979097900099900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00c90000909c90900009c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00090000000900000009000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+00010000160501c0501d0501d0501a0501a0501b0501b0501b0501b0501b0501b0501b0501b0501b0501b0501a0501905019050190501905019050190501a0501a05000000000000000000000000000000000000
