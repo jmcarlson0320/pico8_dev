@@ -3,6 +3,7 @@ version 41
 __lua__
 -- main
 -- todo
+-- missles fire seperately
 -- sound effects
 -- rapid fire blaster
 -- enemy flash when hit
@@ -306,6 +307,9 @@ function update_play()
    end
   end
  end
+ if pressed(4) then
+  add_intercepter(20+rnd(80),-10)
+ end
 end
 
 function draw_play()
@@ -443,7 +447,7 @@ function update_ship()
  ship.x=mid(0,ship.x,120)
 
  -- fire bullet
- if pressed(4) or pressed(5) then
+ if pressed(5) then
   if t-time_of_last_shot>b_cooldwn then
    make_bullet(ship.x-4,ship.y)
    make_bullet(ship.x+4,ship.y)
