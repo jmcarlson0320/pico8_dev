@@ -101,11 +101,11 @@ function update_particle(p)
 end
 
 function draw_particle(p)
- local n=#p.col_tbl
- local i=flr(p.age/p.lifetime*n)+1
- local diff=p.rad_final-p.rad_start
- local r=p.rad_start+p.age/p.lifetime*diff
- circfill(p.x,p.y,r,p.col_tbl[i])
+ local n_col=#p.col_tbl
+ local n_rad=#p.rad_tbl
+ local c=flr(p.age/p.lifetime*n_col)+1
+ local r=flr(p.age/p.lifetime*n_rad)+1
+ circfill(p.x,p.y,p.rad_tbl[r],p.col_tbl[c])
 end
 
 --particle effects
@@ -118,8 +118,7 @@ function missle_trail(x,y)
  p.ddy=0.1
  p.lifetime=5+rnd(30)
  p.age=0
- p.rad_start=2
- p.rad_final=0
+ p.rad_tbl={1,0}
  p.col_tbl={7,7,10,9,8,4,4,4,7,5,5,5}
  add(particles,p)
 end
@@ -133,8 +132,7 @@ function muzzel_flash(x,y)
  p.ddy=0
  p.lifetime=4
  p.age=0
- p.rad_start=7
- p.rad_final=0
+ p.rad_tbl={6,5,4,3,2,1,0}
  p.col_tbl={7}
  add(particles,p)
 end
@@ -149,6 +147,7 @@ function missle_explosion(x,y)
   p.ddy=0
   p.lifetime=20
   p.age=0
+  p.rad_tbl={4,2,1}
   p.rad_start=5
   p.rad_final=1
   p.col_tbl={10,8,2,1}
@@ -165,8 +164,7 @@ function explosion_flash(x,y)
  p.ddy=0
  p.lifetime=4
  p.age=0
- p.rad_start=17
- p.rad_final=0
+ p.rad_tbl={17,12,5,0}
  p.col_tbl={7}
  add(particles,p)
 end
