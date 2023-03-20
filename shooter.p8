@@ -55,26 +55,19 @@ function draw_bullet(b)
 end
 
 --particles
-function add_particle(
- x,y,spread,
- radius,
- shrink,grow,
- dx,dy,
- life_min,life_max,
- colors
- )
+function make_particle(x,y)
  local p={}
- p.x=x+rnd(2*spread)-spread
- p.y=y+rnd(2*spread)-spread
- p.rad=radius
- p.shrink=shrink
- p.grow=grow
+ p.x=x
+ p.y=y
  p.dx=dx
  p.dy=dy
- p.lifetime=life_min+rnd(life_max-life_min)
+ p.ddy=0
+ p.lifetime=30
  p.age=0
- p.col_tbl=colors
- add(particles,p)
+ p.rad_start=0
+ p.rad_final=0
+ p.col_tbl={7}
+ return p
 end
 
 function update_particle(p)
@@ -84,37 +77,47 @@ function update_particle(p)
   p.age+=1
   p.x+=p.dx
   p.y+=p.dy
+  p.dy+=p.ddy
  end
 end
 
 function draw_particle(p)
- local num_col=#p.col_tbl
- local i=flr(p.age/p.lifetime*num_col)+1
- local radius=p.rad-flr(p.age/p.lifetime*p.rad)-1
- circfill(p.x,p.y,radius,p.col_tbl[i])
+ local n=#p.col_tbl
+ local i=flr(p.age/p.lifetime*n)+1
+ local diff=p.rad_final-p.rad_start
+ local r=p.rad_start+p.age/p.lifetime*diff
+ circfill(p.x,p.y,r,p.col_tbl[i])
 end
 
 --particle effects
 function missle_trail(x,y)
- add_particle(
- x,y,2,
- 2,
- false,false,
- rnd(0.6)-0.3,-0.3,
- 5,35,
- {7,7,10,9,8,4,4,4,7,5,5,5}
- )
+ local p={}
+ p.x=x+rnd(4)-2
+ p.y=y+rnd(4)-2
+ p.dx=rnd(0.6)-0.3
+ p.dy=-0.3
+ p.ddy=0.1
+ p.lifetime=5+rnd(30)
+ p.age=0
+ p.rad_start=2
+ p.rad_final=0
+ p.col_tbl={7,7,10,9,8,4,4,4,7,5,5,5}
+ add(particles,p)
 end
 
 function muzzel_flash(x,y)
- add_particle(
- x,y,0,
- 6,
- true,false,
- 0,0,
- 3,3,
- {7}
- )
+ local p={}
+ p.x=x
+ p.y=y
+ p.dx=0
+ p.dy=0
+ p.ddy=0
+ p.lifetime=4
+ p.age=0
+ p.rad_start=6
+ p.rad_final=0
+ p.col_tbl={7}
+ add(particles,p)
 end
 
 -- starfield
@@ -219,7 +222,7 @@ function init_play()
  ship.dx=0
  ship.dir="straight"
  lives=3
- add_enemy(64,20,10,65)
+ add_intercepter(64,20)
 end
 
 function update_play()
@@ -241,6 +244,7 @@ function draw_play()
  foreach(bullets,draw_bullet)
  foreach(enemies,draw_enemy)
  draw_ui(4,4)
+ pset(64,20,7)
 end
 -->8
 -- gameover
@@ -264,17 +268,14 @@ function draw_gameover()
 end
 -->8
 -- enemies
-function add_enemy(
- x,y,
- hp,
- sprite
- )
+function add_intercepter(x,y)
  local e={}
  e.x=x
  e.y=y
- e.hp=hp
+ e.hp=10
  e.score=10
- e.sprite=sprite
+ e.sprite=65
+ e.drift=slow_drift()
  add(enemies,e)
 end
 
@@ -282,20 +283,30 @@ function update_enemy(e)
  if e.hp<=0 then
   del(enemies,e)
  end
+ drift(e)
 end
 
 function draw_enemy(e)
- local x_dft=drift(4,90,0)
- local y_dft=drift(2,60,0)
  local frames={89,90,91,92}
  local ticks_per_frame=3
  local i=flr(t/ticks_per_frame%#frames)+1
- spr(frames[i],e.x+x_dft,e.y-7+y_dft)
- spr(e.sprite,e.x+x_dft,e.y+y_dft)
+ spr(frames[i],e.x,e.y-7)
+ spr(e.sprite,e.x,e.y)
+ pset(e.x,e.y,10)
 end
 
-function drift(amp,per,pha)
- return amp*sin(t/per+pha)
+function drift(e)
+ local d=e.drift
+ e.x+=d.ax*sin(t/d.tx+d.px)
+ e.y+=d.ay*sin(t/d.ty+d.py)
+end
+
+function slow_drift()
+ local params={
+  ax=0.1,tx=90,px=0,
+  ay=0.05,ty=60,py=0
+ }
+ return params
 end
 -->8
 --ship
