@@ -285,7 +285,6 @@ function init_play()
  ship.dx=0
  ship.dir="straight"
  lives=3
- add_intercepter(64,20)
 end
 
 function update_play()
