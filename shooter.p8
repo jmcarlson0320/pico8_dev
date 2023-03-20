@@ -3,13 +3,21 @@ version 41
 __lua__
 -- main
 -- todo
+-- make particle radius work like
+--    particle color
+-- sound effects
+-- rapid fire blaster
+-- enemy flash when hit
+-- enemy hit effects
+-- enemy hitpoints
+-- animation component
 -- enemy types
--- weapon types
+-- power ups
+-- other weapons
 function _init()
  t=0
- time_of_last_shot=t
- b_cooldwn=15
  dt=1/30
+ init_weapon_timers()
  ship=make_ship()
  enemies={}
  stars=make_starfield(40)
@@ -50,12 +58,19 @@ function update_bullet(b)
  b.y+=b.dy*dt
  if b.y<0 then
   del(bullets,b)
+  missle_explosion(b.x,b.y)
+  explosion_flash(b.x,b.y)
  end
  missle_trail(b.x+4,b.y+10)
 end
 
 function draw_bullet(b)
  spr(10,b.x,b.y)
+end
+
+function init_weapon_timers()
+ time_of_last_shot=t
+ b_cooldwn=15
 end
 
 --particles
@@ -118,7 +133,7 @@ function muzzel_flash(x,y)
  p.ddy=0
  p.lifetime=4
  p.age=0
- p.rad_start=6
+ p.rad_start=7
  p.rad_final=0
  p.col_tbl={7}
  add(particles,p)
@@ -150,7 +165,7 @@ function explosion_flash(x,y)
  p.ddy=0
  p.lifetime=4
  p.age=0
- p.rad_start=12
+ p.rad_start=17
  p.rad_final=0
  p.col_tbl={7}
  add(particles,p)
@@ -349,7 +364,9 @@ end
 function update_enemy(e)
  if e.hp<=0 then
   del(enemies,e)
+  return
  end
+ e.y+=0.5
  drift(e)
 end
 
@@ -437,6 +454,8 @@ function update_ship()
    make_bullet(ship.x+4,ship.y)
 
    muzzel_flash(ship.x+1,ship.y-1)
+   muzzel_flash(ship.x+7,ship.y-1)
+
    time_of_last_shot=t  
   end 
  end
