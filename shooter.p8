@@ -3,8 +3,6 @@ version 41
 __lua__
 -- main
 -- todo
--- collision
--- explosion
 -- enemy types
 -- weapon types
 function _init()
@@ -57,8 +55,7 @@ function update_bullet(b)
 end
 
 function draw_bullet(b)
-spr(10,b.x,b.y)
-draw_hitbox(b)
+ spr(10,b.x,b.y)
 end
 
 --particles
@@ -122,6 +119,38 @@ function muzzel_flash(x,y)
  p.lifetime=4
  p.age=0
  p.rad_start=6
+ p.rad_final=0
+ p.col_tbl={7}
+ add(particles,p)
+end
+
+function missle_explosion(x,y)
+ for i=1,20 do
+  local p={}
+  p.x=x
+  p.y=y
+  p.dx=rnd(2)-1
+  p.dy=rnd(2)-1
+  p.ddy=0
+  p.lifetime=20
+  p.age=0
+  p.rad_start=5
+  p.rad_final=1
+  p.col_tbl={10,8,2,1}
+ add(particles,p)
+ end
+end
+
+function explosion_flash(x,y)
+ local p={}
+ p.x=x
+ p.y=y
+ p.dx=0
+ p.dy=0
+ p.ddy=0
+ p.lifetime=4
+ p.age=0
+ p.rad_start=12
  p.rad_final=0
  p.col_tbl={7}
  add(particles,p)
@@ -260,7 +289,10 @@ function update_play()
  for b in all(bullets) do
   for e in all(enemies) do
    if has_collided(b,e) then
-    sfx(0)
+    del(enemies,e)
+    del(bullets,b)
+    missle_explosion(e.x+4,e.y+2)
+    explosion_flash(e.x+4,e.y+2)
    end
   end
  end
@@ -304,7 +336,7 @@ function add_intercepter(x,y)
  e.hp=10
  e.score=10
  e.sprite=65
- e.drift=slow_drift()
+ e.drift_params=slow_drift()
  e.hitbox={
   x0=1,
   y0=0,
@@ -327,11 +359,10 @@ function draw_enemy(e)
  local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],e.x,e.y-7)
  spr(e.sprite,e.x,e.y)
- draw_hitbox(e)
 end
 
 function drift(e)
- local d=e.drift
+ local d=e.drift_params
  e.x+=d.ax*sin(t/d.tx+d.px)
  e.y+=d.ay*sin(t/d.ty+d.py)
 end
@@ -495,4 +526,4 @@ __gfx__
 00c90000909c90900009c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00090000000900000009000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-00010000160501c0501d0501d0501a0501a0501b0501b0501b0501b0501b0501b0501b0501b0501b0501b0501a0501905019050190501905019050190501a0501a05000000000000000000000000000000000000
+00010000150501505014050140501405019050130501e0501e0501e0501d0501f0501d050120501c050120501c0501c050120501c0501c0501c0500e0500e0500d05000000000000000000000000000000000000
