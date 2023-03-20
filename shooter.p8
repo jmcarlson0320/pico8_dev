@@ -3,8 +3,6 @@ version 41
 __lua__
 -- main
 -- todo
--- make particle radius work like
---    particle color
 -- sound effects
 -- rapid fire blaster
 -- enemy flash when hit
@@ -83,8 +81,7 @@ function make_particle(x,y)
  p.ddy=0
  p.lifetime=30
  p.age=0
- p.rad_start=0
- p.rad_final=0
+ p.rad_tbl={0}
  p.col_tbl={7}
  return p
 end
