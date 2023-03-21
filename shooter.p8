@@ -3,7 +3,9 @@ version 41
 __lua__
 -- main
 -- todo
--- sound effects
+-- weapon component
+-- missles fire seperately
+-- other weapons
 -- rapid fire blaster
 -- enemy flash when hit
 -- enemy hit effects
@@ -12,8 +14,6 @@ __lua__
 -- animations should use local t
 -- enemy types
 -- power ups
--- other weapons
--- missles fire seperately
 
 function _init()
  t=0
