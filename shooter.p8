@@ -3,6 +3,7 @@ version 41
 __lua__
 -- main
 -- todo
+-- import sprite sheet?
 -- weapon component
 -- missles fire seperately
 -- other weapons
@@ -24,6 +25,7 @@ function _init()
  stars=make_starfield(40)
  star_colors={1,5}
  particles={}
+ missiles={}
  bullets={}
  lives=3
  score=10000
@@ -40,34 +42,34 @@ function _draw()
  _drw()
 end
 
--- bullet
-function make_bullet(x,y)
- local b={}
- b.x=x
- b.y=y
- b.dy=-100
- b.hitbox={
+-- missile
+function make_missile(x,y)
+ local m={}
+ m.x=x
+ m.y=y
+ m.dy=-100
+ m.hitbox={
   x0=3,
   y0=0,
   x1=4,
   y1=2
  }
- add(bullets,b)
+ add(missiles,m)
 end
 
-function update_bullet(b)
- b.y+=b.dy*dt
- if b.y<0 then
-  del(bullets,b)
-  missle_explosion(b.x,b.y)
-  explosion_flash(b.x,b.y)
+function update_missile(m)
+ m.y+=m.dy*dt
+ if m.y<0 then
+  del(missiles,m)
+  missle_explosion(m.x,m.y)
+  explosion_flash(m.x,m.y)
   sfx(1)
  end
- missle_trail(b.x+4,b.y+10)
+ missle_trail(m.x+4,m.y+10)
 end
 
-function draw_bullet(b)
- spr(10,b.x,b.y)
+function draw_missile(m)
+ spr(10,m.x,m.y)
 end
 
 function init_weapon_timers()
@@ -87,7 +89,7 @@ function make_particle(x,y)
  p.age=0
  p.rad_tbl={0}
  p.col_tbl={7}
- return p
+ add(particles,p)
 end
 
 function update_particle(p)
@@ -283,6 +285,7 @@ function init_play()
  _drw=draw_play
  particles={}
  bullets={}
+ missiles={}
  enemies={}
  ship.x=60
  ship.dx=0
@@ -293,17 +296,17 @@ end
 function update_play()
  update_ship()
  foreach(enemies,update_enemy)
- foreach(bullets,update_bullet)
+ foreach(missiles,update_missile)
  foreach(particles,update_particle)
  foreach(stars,update_star)
  if lives<=0 then
   init_gameover()
  end
- for b in all(bullets) do
+ for m in all(missiles) do
   for e in all(enemies) do
-   if has_collided(b,e) then
+   if has_collided(m,e) then
     del(enemies,e)
-    del(bullets,b)
+    del(missiles,m)
     missle_explosion(e.x+4,e.y+2)
     explosion_flash(e.x+4,e.y+2)
     sfx(1)
@@ -320,7 +323,7 @@ function draw_play()
  foreach(stars,draw_star)
  draw_ship()
  foreach(particles,draw_particle)
- foreach(bullets,draw_bullet)
+ foreach(missiles,draw_missile)
  foreach(enemies,draw_enemy)
  draw_ui(4,4)
 end
@@ -452,8 +455,8 @@ function update_ship()
  -- fire bullet
  if pressed(5) then
   if t-time_of_last_shot>b_cooldwn then
-   make_bullet(ship.x-4,ship.y)
-   make_bullet(ship.x+4,ship.y)
+   make_missile(ship.x-4,ship.y)
+   make_missile(ship.x+4,ship.y)
 
    muzzel_flash(ship.x+1,ship.y-1)
    muzzel_flash(ship.x+7,ship.y-1)
@@ -484,11 +487,11 @@ function draw_ship()
  spr(frames[i],ship.x+2+right_offset,ship.y+8)
 end
 __gfx__
-000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000000000000000000000000000000000000000000
-00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000000000000000000000000000000000000000000
-00700700020002808200002808200020088088000000200000008000000000000000900000008000000670000000000000000000000000000000000000000000
-000770000207c2808207c0280827c020088888000000000000000000000000000000000000000000006007000000000000000000000000000000000000000000
-00077000022822808288882808228220008080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000000700000000000000000000000000000000000
+00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000007670000000000000000000000000000000000
+00700700020002808200002808200020088088000000200000008000000000000000900000008000000670000006660000000000000000000000000000000000
+000770000207c2808207c0280827c020088888000000000000000000000000000000000000000000006007000006c60000000000000000000000000000000000
+0007700002282280828888280822822000808000000000000000000000000000000000000000000000000000000c0c0000000000000000000000000000000000
 00700700020228808802208808822020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000020008000800008000800020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000005000d000d0000d000d00050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
