@@ -26,7 +26,7 @@ function _init()
  particles={}
  missiles={}
  bullets={}
- bullet_timer=0
+ blaster_timer=0
  lives=3
  score=10000
  init_title()
@@ -49,10 +49,10 @@ function make_bullet(x,y)
  b.y=y
  b.dy=-250
  b.hitbox={
-  x0=0,
+  x0=2,
   y0=0,
-  x1=8,
-  y1=8
+  x1=5,
+  y1=7
  }
  add(bullets,b)
 end
@@ -198,6 +198,22 @@ function explosion_flash(x,y)
  add(particles,p)
 end
 
+function blaster_hit(x,y)
+ for i=1,10 do 
+  local p={}
+  p.x=x
+  p.y=y
+  p.dx=rnd(3)-1.5
+  p.dy=rnd(3)-1.5
+  p.ddy=0
+  p.lifetime=5+rnd(10)
+  p.age=0
+  p.rad_tbl={0}
+  p.col_tbl={10,9}
+  add(particles,p)
+ end
+end
+
 -- starfield
 function make_starfield(n)
  local starfield={}
@@ -319,26 +335,16 @@ function init_play()
 end
 
 function update_play()
- bullet_timer-=1
+ blaster_timer-=1
  update_ship()
  foreach(enemies,update_enemy)
  foreach(missiles,update_missile)
  foreach(bullets,update_bullet)
  foreach(particles,update_particle)
  foreach(stars,update_star)
+ bullet_enemy_collisions()
  if lives<=0 then
   init_gameover()
- end
- for b in all(bullets) do
-  for e in all(enemies) do
-   if has_collided(b,e) then
-    del(enemies,e)
-    del(bullets,b)
-    missle_explosion(e.x+4,e.y+2)
-    explosion_flash(e.x+4,e.y+2)
-    sfx(1)
-   end
-  end
  end
  if pressed(4) then
   add_intercepter(20+rnd(80),-10)
@@ -356,8 +362,19 @@ function draw_play()
  draw_ui(4,4)
 end
 
-function bullet_enemy_collision()
- 
+function bullet_enemy_collisions()
+ for b in all(bullets) do
+  for e in all(enemies) do
+   if has_collided(b,e) then
+    e.flash=3
+    del(bullets,b)
+    blaster_hit(e.x+4,e.y+2)
+    muzzel_flash(e.x+4,e.y+2)
+    e.hp-=4
+    
+   end
+  end
+ end
 end
 -->8
 -- gameover
@@ -395,12 +412,16 @@ function add_intercepter(x,y)
   x1=6,
   y1=3
  }
+ e.flash=0
  add(enemies,e)
 end
 
 function update_enemy(e)
  if e.hp<=0 then
   del(enemies,e)
+  missle_explosion(e.x+4,e.y+2)
+  explosion_flash(e.x+4,e.y+2)
+  sfx(1)
   return
  end
  e.y+=0.5
@@ -412,7 +433,14 @@ function draw_enemy(e)
  local ticks_per_frame=3
  local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],e.x,e.y-7)
+ if e.flash>0 then
+  e.flash-=1
+  for i=1,16 do
+   pal(i,7)
+  end
+ end
  spr(e.sprite,e.x,e.y)
+ pal()
 end
 
 function drift(e)
@@ -486,13 +514,7 @@ function update_ship()
 
  -- fire blaster
  if btn(5) then
-  if bullet_timer<=0 then
-   make_bullet(ship.x-3,ship.y)
-   make_bullet(ship.x+3,ship.y)
-   muzzel_flash(ship.x+1,ship.y)
-   muzzel_flash(ship.x+6,ship.y)
-   bullet_timer=3
-  end
+  fire_blaster()
  end
  
  -- fire missile
@@ -530,6 +552,20 @@ function draw_ship()
  local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],ship.x-3+left_offset,ship.y+8)
  spr(frames[i],ship.x+2+right_offset,ship.y+8)
+end
+
+function fire_blaster()
+ if blaster_timer<=0 then
+  make_bullet(ship.x-3,ship.y)
+  make_bullet(ship.x+3,ship.y)
+  muzzel_flash(ship.x+1,ship.y)
+  muzzel_flash(ship.x+6,ship.y)
+  blaster_timer=3
+ end
+end
+
+function fire_missile()
+
 end
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
