@@ -14,7 +14,6 @@ __lua__
 
 function _init()
  t=0
- dt=1/30
  init_weapon_timers()
  ship=make_ship()
  enemies={}
@@ -43,7 +42,7 @@ function make_bullet(x,y)
  local b={}
  b.x=x
  b.y=y
- b.dy=-250
+ b.dy=-9
  b.hitbox={
   x0=2,
   y0=0,
@@ -54,8 +53,8 @@ function make_bullet(x,y)
 end
 
 function update_bullet(b)
- b.y+=b.dy*dt
- if b.y<0 then
+ b.y+=b.dy
+ if b.y<-8 then
   del(bullets,b)
  end
 end
@@ -279,6 +278,7 @@ function draw_title()
  foreach(stars,draw_star)
  print("title screen\n",50,50,7)
  print("press ❎ or 🅾️ to start",30,58,7)
+ print(btn())
 end
 -->8
 -- play
@@ -417,15 +417,24 @@ function slow_drift()
 end
 -->8
 --ship
+key_code={[0]=0,1,2,0,3,5,6,3,4,8,7,4,0,1,2,0}
+x_dir={[0]=0,-1,1,0,0,-0.707,0.707,0.707,-0.707}
+y_dir={[0]=0,0,0,-1,1,-0.707,-0.707,0.707,0.707}
+
+function get_dir_from_input()
+ local msk=btn()&0xf
+ local key=key_code[msk]
+ return x_dir[key],y_dir[key]
+end
+
+dir_y={}
 function make_ship()
  local s={}
  s.x=60
  s.y=112
- s.dx=0
- s.dir="straight"
- s.thrust=1000
- s.decel=200
- s.maxspd=75
+ s.dir=0
+ s.lastdir=0
+ s.spd=2.75
  s.sprites={
   left=17,
   straight=18,
@@ -435,42 +444,19 @@ function make_ship()
 end
 
 function update_ship()
- --- apply thrust
- if btn(0) then
-  ship.dir="left"
-  ship.dx-=ship.thrust*dt
- end
- if btn(1) then
-  ship.dir="right"
-  ship.dx+=ship.thrust*dt
- end
 
- -- limit max speed
- ship.dx=mid(
- -ship.maxspd,
- ship.dx,
- ship.maxspd
- )
+ local dx,dy=get_dir_from_input()
+ ship.x+=dx*ship.spd
+ ship.y+=dy*ship.spd
 
- -- decellerate when not turning
- if not btn(0) and
- not btn(1) then
+ if not btn(0) and not btn(1) then
   ship.dir="straight"
-  if ship.dx<-10 then
-   ship.dx+=ship.decel*dt
-  elseif ship.dx>10 then
-   ship.dx-=ship.decel*dt
-  else
-   ship.dx=0
-  end
  end
-
- -- change position
- ship.x+=ship.dx*dt
 
  -- clamp to screen
  ship.x=mid(0,ship.x,120)
-
+ ship.y=mid(0,ship.y,120)
+ 
  -- fire blaster
  if btn(5) then
   fire_blaster()
