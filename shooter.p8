@@ -169,7 +169,7 @@ function missle_explosion(x,y)
   p.dx=rnd(2)-1
   p.dy=rnd(2)-1
   p.ddy=0
-  p.lifetime=20
+  p.lifetime=5+rnd(15)
   p.age=0
   p.rad_tbl={4,2,1}
   p.rad_start=5
@@ -186,9 +186,9 @@ function explosion_flash(x,y)
  p.dx=0
  p.dy=0
  p.ddy=0
- p.lifetime=4
+ p.lifetime=6
  p.age=0
- p.rad_tbl={17,12,5,0}
+ p.rad_tbl={14,8,5,0}
  p.col_tbl={7}
  add(particles,p)
 end
@@ -417,47 +417,44 @@ function slow_drift()
 end
 -->8
 --ship
-key_code={[0]=0,1,2,0,3,5,6,3,4,8,7,4,0,1,2,0}
+dir_code={[0]=0,1,2,0,3,5,6,3,4,8,7,4,0,1,2,0}
 x_dir={[0]=0,-1,1,0,0,-0.707,0.707,0.707,-0.707}
 y_dir={[0]=0,0,0,-1,1,-0.707,-0.707,0.707,0.707}
 
 function get_dir_from_input()
  local msk=btn()&0xf
- local key=key_code[msk]
- return x_dir[key],y_dir[key]
+ local dir=dir_code[msk]
+ return dir
 end
 
-dir_y={}
 function make_ship()
  local s={}
  s.x=60
  s.y=112
  s.dir=0
  s.lastdir=0
- s.spd=2.75
+ s.spd=2
  s.sprites={
-  left=17,
-  straight=18,
-  right=19
+  [1]=17,
+  [5]=17,
+  [8]=17,
+  [0]=18,
+  [3]=18,
+  [4]=18,
+  [2]=19,
+  [6]=19,
+  [7]=19
  }
  return s
 end
 
 function update_ship()
-
- local dx,dy=get_dir_from_input()
- ship.x+=dx*ship.spd
- ship.y+=dy*ship.spd
-
- if not btn(0) and not btn(1) then
-  ship.dir="straight"
- end
-
- -- clamp to screen
+ ship.dir=get_dir_from_input()
+ ship.x+=x_dir[ship.dir]*ship.spd
+ ship.y+=y_dir[ship.dir]*ship.spd
  ship.x=mid(0,ship.x,120)
  ship.y=mid(0,ship.y,120)
  
- -- fire blaster
  if btn(5) then
   fire_blaster()
  end
@@ -467,16 +464,14 @@ function draw_ship()
  local sp=ship.sprites[ship.dir]
  spr(sp,ship.x,ship.y)
 
- -- adjust position of engine sprite
  local left_offset=0
  local right_offset=0
- if ship.dir=="right" then
+ if sp==19 then
   left_offset=1
- elseif ship.dir=="left" then
+ elseif sp==17 then
   right_offset=-1
  end
 
- -- engine sprite
  local frames={6,7,8,9}
  local ticks_per_frame=3
  local i=flr(t/ticks_per_frame%#frames)+1
