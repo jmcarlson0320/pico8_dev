@@ -3,13 +3,10 @@ version 41
 __lua__
 -- main
 -- todo
--- import sprite sheet?
 -- weapon component
 -- missles fire seperately
 -- other weapons
--- enemy flash when hit
--- enemy hit effects
--- enemy hitpoints
+-- enemy hit sounds
 -- general animation component/system
 -- animations should use local t
 -- enemy types
@@ -34,7 +31,6 @@ end
 
 function _update()
  t+=1
- update_btn_state()
  _upd()
 end
 
@@ -248,42 +244,6 @@ function draw_ui(x,y)
  print(score,x+50,y,7)
 end
 
--- user input
-prev_btn_state={
- [0]=false,
- [1]=false,
- [2]=false,
- [3]=false,
- [4]=false,
- [5]=false
-}
-
-cur_btn_state={
- [0]=false,
- [1]=false,
- [2]=false,
- [3]=false,
- [4]=false,
- [5]=false
-}
-
-function update_btn_state()
- for b=0,6 do
-  prev_btn_state[b]=cur_btn_state[b]
-  cur_btn_state[b]=btn(b)
- end
-end
-
-function pressed(b)
- return not prev_btn_state[b] 
- and cur_btn_state[b]
-end
-
-function released(b)
- return prev_btn_state[b] and
- not cur_btn_state[b]
-end
-
 --collision
 function draw_hitbox(o)
  local h=o.hitbox
@@ -346,7 +306,7 @@ function update_play()
  if lives<=0 then
   init_gameover()
  end
- if pressed(4) then
+ if btnp(4) then
   add_intercepter(20+rnd(80),-10)
  end
 end
@@ -366,12 +326,11 @@ function bullet_enemy_collisions()
  for b in all(bullets) do
   for e in all(enemies) do
    if has_collided(b,e) then
-    e.flash=3
+    e.flash=4
     del(bullets,b)
     blaster_hit(e.x+4,e.y+2)
     muzzel_flash(e.x+4,e.y+2)
     e.hp-=4
-    
    end
   end
  end
@@ -516,21 +475,6 @@ function update_ship()
  if btn(5) then
   fire_blaster()
  end
- 
- -- fire missile
- --[[
- if pressed(5) then
-  if t-time_of_last_shot>b_cooldwn then
-   make_missile(ship.x-4,ship.y)
-   make_missile(ship.x+4,ship.y)
-
-   muzzel_flash(ship.x+1,ship.y-1)
-   muzzel_flash(ship.x+7,ship.y-1)
-   sfx(0)
-   time_of_last_shot=t  
-  end 
- end
- --]]
 end
 
 function draw_ship()
@@ -565,7 +509,14 @@ function fire_blaster()
 end
 
 function fire_missile()
-
+ if t-time_of_last_shot>b_cooldwn then
+  make_missile(ship.x-4,ship.y)
+  make_missile(ship.x+4,ship.y)
+  muzzel_flash(ship.x+1,ship.y-1)
+  muzzel_flash(ship.x+7,ship.y-1)
+  sfx(0)
+  time_of_last_shot=t  
+ end 
 end
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
