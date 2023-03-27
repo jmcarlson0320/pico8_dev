@@ -3,14 +3,18 @@ version 41
 __lua__
 -- main
 -- todo
+-- ship reset state
+-- enemy shots
+-- enemy types
+-- - bigger enemies
+-- enemy behavior
+-- wave system
+-- general animation component/system
+-- animations should use local t
+-- power ups
 -- weapon component
 -- missles fire seperately
 -- other weapons
--- enemy hit sounds
--- general animation component/system
--- animations should use local t
--- enemy types
--- power ups
 
 function _init()
  t=0
@@ -45,9 +49,9 @@ function make_bullet(x,y)
  b.dy=-9
  b.hitbox={
   x0=2,
-  y0=0,
+  y0=1,
   x1=5,
-  y1=7
+  y1=6
  }
  add(bullets,b)
 end
@@ -238,7 +242,7 @@ end
 function draw_ui(x,y)
  for i=1,lives do
   local offset=(i-1)*8
-  spr(20,x+0+offset,y+0)
+  spr(36,x+0+offset,y+0)
  end
  print(score,x+50,y,7)
 end
@@ -303,6 +307,7 @@ function update_play()
  foreach(particles,update_particle)
  foreach(stars,update_star)
  bullet_enemy_collisions()
+ enemy_player_collisions()
  if lives<=0 then
   init_gameover()
  end
@@ -331,7 +336,20 @@ function bullet_enemy_collisions()
     blaster_hit(e.x+4,e.y+2)
     muzzel_flash(e.x+4,e.y+2)
     e.hp-=4
+    sfx(3)
    end
+  end
+ end
+end
+
+function enemy_player_collisions()
+ if ship.invul>0 then return end
+ for e in all(enemies) do
+  if has_collided(e,ship) then
+   e.flash=4
+   e.hp-=2 
+   reset_ship()
+   lives-=1
   end
  end
 end
@@ -361,14 +379,14 @@ function add_intercepter(x,y)
  local e={}
  e.x=x
  e.y=y
- e.hp=10
+ e.hp=5
  e.score=10
  e.sprite=65
  e.drift_params=slow_drift()
  e.hitbox={
-  x0=1,
-  y0=0,
-  x1=6,
+  x0=2,
+  y0=1,
+  x1=5,
   y1=3
  }
  e.flash=0
@@ -433,18 +451,26 @@ function make_ship()
  s.y=112
  s.dir=0
  s.lastdir=0
- s.spd=2
+ s.spd=2.25
  s.sprites={
-  [1]=17,
-  [5]=17,
-  [8]=17,
-  [0]=18,
-  [3]=18,
-  [4]=18,
-  [2]=19,
-  [6]=19,
-  [7]=19
+  [1]=33,
+  [5]=33,
+  [8]=33,
+  [0]=34,
+  [3]=34,
+  [4]=34,
+  [2]=35,
+  [6]=35,
+  [7]=35
  }
+ s.hitbox={
+  x0=2,
+  y0=2,
+  x1=5,
+  y1=6
+ }
+ s.invul=0
+ s.draw=true
  return s
 end
 
@@ -455,20 +481,32 @@ function update_ship()
  ship.x=mid(0,ship.x,120)
  ship.y=mid(0,ship.y,120)
  
- if btn(5) then
+ if btn(5) and ship.invul<=0 then
   fire_blaster()
+ end
+ 
+ if ship.invul>0 then
+  ship.invul-=1
+  if ship.invul%3==0 then
+   ship.draw=not ship.draw
+  end
+  if ship.invul==0 then
+   ship.draw=true
+  end
  end
 end
 
 function draw_ship()
+ if ship.draw==false then return end
+ 
  local sp=ship.sprites[ship.dir]
  spr(sp,ship.x,ship.y)
 
  local left_offset=0
  local right_offset=0
- if sp==19 then
+ if sp==35 then
   left_offset=1
- elseif sp==17 then
+ elseif sp==33 then
   right_offset=-1
  end
 
@@ -477,6 +515,7 @@ function draw_ship()
  local i=flr(t/ticks_per_frame%#frames)+1
  spr(frames[i],ship.x-3+left_offset,ship.y+8)
  spr(frames[i],ship.x+2+right_offset,ship.y+8)
+ print(ship.invul)
 end
 
 function fire_blaster()
@@ -485,6 +524,7 @@ function fire_blaster()
   make_bullet(ship.x+3,ship.y)
   muzzel_flash(ship.x+1,ship.y)
   muzzel_flash(ship.x+6,ship.y)
+  sfx(2)
   blaster_timer=3
  end
 end
@@ -498,6 +538,12 @@ function fire_missile()
   sfx(0)
   time_of_last_shot=t  
  end 
+end
+
+function reset_ship()
+ ship.invul=30
+ ship.x=60
+ ship.y=100
 end
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
@@ -564,4 +610,6 @@ __gfx__
 00090000000900000009000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 7b0500003e6103161025610206102061020610216102061020610206101e6101f6101e6101e6101d6101d6101d6101d6101d6101c6101a6101a61019610196101961018610186101761016610166101661015610
-920600002967000670006700067000670006700063000630006200062000620006200062000610006100061000610006100061000610006100061000610006100061000610006000060000600006000060000600
+970600002967000670006700067000670006700065000650006200062000620006200062000610006100061000610006100061000610006100061000610006100061000610006000060000600006000060000600
+94010000225701e5601c5601955017550165401554013540125402950026500255000b50008500065000050000500005000050000500005000050000500005000050000500005000050000500005000050000500
+02020000346202f610296100a610156100a610136100a610016000c60000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600
