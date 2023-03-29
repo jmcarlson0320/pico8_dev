@@ -41,7 +41,11 @@ function update_title()
     if btnp(4) or btnp(5) then
         init_play()
     end
-    if (btnp(0)) explosion_flash(64,64)
+    if (btnp(0)) large_flash(64,64)
+    if (btnp(1)) sparks(64,64)
+    if (btnp(2)) smoke(64,64)
+    if (btnp(3)) sfx(1)
+
     foreach(stars,update_star)
     foreach(particles,update_particle)
 end
@@ -151,8 +155,8 @@ end
 
 function update_enemy(e)
     if e.hp<=0 then
-        missle_explosion(e.x+4,e.y+2)
-        explosion_flash(e.x+4,e.y+2)
+        smoke(e.x+4,e.y+2)
+        large_flash(e.x+4,e.y+2)
         sfx(1)
         del(enemies,e)
         return
@@ -264,11 +268,11 @@ function draw_ship()
 end
 
 function fire_blaster()
-    if blaster_timer<=0 then
+    if blaster_timer<=0 and #bullets<6 then
         make_bullet(ship.x-3,ship.y)
         make_bullet(ship.x+3,ship.y)
-        muzzel_flash(ship.x+1,ship.y)
-        muzzel_flash(ship.x+6,ship.y)
+        small_flash(ship.x+1,ship.y)
+        small_flash(ship.x+6,ship.y)
         sfx(2)
         blaster_timer=3
     end
@@ -278,8 +282,8 @@ function fire_missile()
     if t-time_of_last_shot>b_cooldwn then
         make_missile(ship.x-4,ship.y)
         make_missile(ship.x+4,ship.y)
-        muzzel_flash(ship.x+1,ship.y-1)
-        muzzel_flash(ship.x+7,ship.y-1)
+        small_flash(ship.x+1,ship.y-1)
+        small_flash(ship.x+7,ship.y-1)
         sfx(0)
         time_of_last_shot=t  
     end 
@@ -351,7 +355,7 @@ function missle_trail(x,y)
     add(particles,p)
 end
 
-function muzzel_flash(x,y)
+function small_flash(x,y)
     local p={}
     p.x=x
     p.y=y
@@ -365,25 +369,7 @@ function muzzel_flash(x,y)
     add(particles,p)
 end
 
-function missle_explosion(x,y)
-    for i=1,10 do
-        local p={}
-        p.x=x
-        p.y=y
-        p.dx=rnd(2)-1
-        p.dy=rnd(2)-1
-        p.ddy=0
-        p.lifetime=5+rnd(15)
-        p.age=0
-        p.rad_tbl={6,3,2}
-        p.rad_start=5
-        p.rad_final=1
-        p.col_tbl={10,9,5}
-        add(particles,p)
-    end
-end
-
-function explosion_flash(x,y)
+function large_flash(x,y)
     local p={}
     p.x=x
     p.y=y
@@ -397,7 +383,23 @@ function explosion_flash(x,y)
     add(particles,p)
 end
 
-function blaster_hit(x,y)
+function smoke(x,y)
+    for i=1,10 do
+        local p={}
+        p.x=x
+        p.y=y
+        p.dx=rnd(2)-1
+        p.dy=rnd(2)-1
+        p.ddy=0
+        p.lifetime=5+rnd(15)
+        p.age=0
+        p.rad_tbl={6,3,2}
+        p.col_tbl={10,9,5}
+        add(particles,p)
+    end
+end
+
+function sparks(x,y)
     for i=1,10 do 
         local p={}
         p.x=x
@@ -524,8 +526,8 @@ function bullet_enemy_collisions()
             if has_collided(b,e) then
                 e.flash=4
                 del(bullets,b)
-                blaster_hit(e.x+4,e.y+2)
-                muzzel_flash(e.x+4,e.y+2)
+                sparks(e.x+4,e.y+2)
+                small_flash(e.x+4,e.y+2)
                 e.hp-=4
                 sfx(3)
             end
