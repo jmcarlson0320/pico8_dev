@@ -41,12 +41,15 @@ function update_title()
     if btnp(4) or btnp(5) then
         init_play()
     end
+    if (btnp(0)) explosion_flash(64,64)
     foreach(stars,update_star)
+    foreach(particles,update_particle)
 end
 
 function draw_title()
     cls(0)
     foreach(stars,draw_star)
+    foreach(particles,draw_particle)
     print("title screen\n",50,50,7)
     print("press ❎ or 🅾️ to start",30,58,7)
 end
