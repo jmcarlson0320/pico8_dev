@@ -363,7 +363,7 @@ function muzzel_flash(x,y)
 end
 
 function missle_explosion(x,y)
-    for i=1,20 do
+    for i=1,10 do
         local p={}
         p.x=x
         p.y=y
@@ -372,10 +372,10 @@ function missle_explosion(x,y)
         p.ddy=0
         p.lifetime=5+rnd(15)
         p.age=0
-        p.rad_tbl={4,2,1}
+        p.rad_tbl={6,3,2}
         p.rad_start=5
         p.rad_final=1
-        p.col_tbl={10,8,2,1}
+        p.col_tbl={10,9,5}
         add(particles,p)
     end
 end
