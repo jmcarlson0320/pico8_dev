@@ -558,8 +558,6 @@ function update_missile(m)
     m.y += m.dy * dt
     if m.y < 0 then
         del(missiles, m)
-        missle_explosion(m.x, m.y)
-        explosion_flash(m.x, m.y)
         sfx(1)
     end
     missle_trail(m.x + 4, m.y + 10)
