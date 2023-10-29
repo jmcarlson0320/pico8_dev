@@ -15,9 +15,13 @@ __lua__
 -- missles fire seperately
 -- other weapons
 
+function debug(x)
+    print(x)
+end
+
 function _init()
     t = 0
-    init_sandbox()
+    init_title()
 end
 
 function _update()
@@ -77,6 +81,7 @@ end
 
 function update_play()
     blaster_timer -= 1
+    missile_timer -= 1
     update_ship()
     update_wave_spawner()
     foreach(enemies, update_enemy)
@@ -117,17 +122,15 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_intercepter(60, 10)
+    add_intercepter(64, 0)
 end
 
 function update_sandbox()
-    foreach(stars, update_star)
     foreach(enemies, update_enemy)
 end
 
 function draw_sandbox()
     cls(0)
-    foreach(stars, draw_star)
     foreach(enemies, draw_enemy)
     print("sandbox\n", 0, 0, 7)
 end
@@ -164,7 +167,7 @@ function add_intercepter(x, y)
     e.hp = 5
     e.score = 10
     e.sprite = 65
-    e.drift_params = slow_drift()
+    e.drift_params = slow_drift
     e.hitbox = {
         x0 = 2,
         y0 = 1,
@@ -172,21 +175,9 @@ function add_intercepter(x, y)
         y1 = 3
     }
     e.flash = 0
-    e.brain = {
-        -- heading
-        -- "hea" angle speed
-        -- wait
-        -- "wai" frames
-        {"hea", 0.6, 0.9},
-        {"wai", 30},
-        {"hea", 0.25, 0.8},
-        {"wai", 30},
-        {"hea", 0.0, 0.2},
-        {"wai", 60},
-        {"hea", 0.5, 2}
-    }
+    e.brain = slow_advance
     e.brain_inst_pointer = 1
-    e.wait = 0
+    e.wait_timer = 0
     add(enemies, e)
 end
 
@@ -195,8 +186,8 @@ function update_enemy(e)
         explode_enemy(e)
         return
     end
-    if e.wait > 0 then
-        e.wait -= 1
+    if e.wait_timer > 0 then
+        e.wait_timer -= 1
     else
         process_brain(e)
     end
@@ -242,27 +233,11 @@ function drift(e)
     e.y += d.ay * sin(t / d.ty + d.py)
 end
 
-function slow_drift()
-    local params = {
+slow_drift = {
         ax = 0.1, tx = 90, px = 0,
         ay = 0.05, ty = 60, py = 0
-    }
-    return params
-end
+}
 
-function process_brain(e)
-    if e.brain_inst_pointer > #e.brain then
-        return
-    end
-    local inst = e.brain[e.brain_inst_pointer]
-    if inst[1] == "hea" then
-        e.angle = inst[2]
-        e.speed = inst[3]
-    elseif inst[1] == "wai" then
-        e.wait = inst[2]
-    end
-    e.brain_inst_pointer += 1
-end
 -->8
 --ship
 function make_ship()
@@ -301,10 +276,6 @@ function update_ship()
     ship.x = mid(0, ship.x, 120)
     ship.y = mid(0, ship.y, 120)
 
-    if btn(5) and ship.invul <= 0 then
-        fire_blaster()
-    end
-
     if ship.invul > 0 then
         ship.invul -= 1
         if ship.invul % 3 == 0 then
@@ -313,7 +284,11 @@ function update_ship()
         if ship.invul == 0 then
             ship.draw = true
         end
+    else
+        if btn(4) then fire_missile() end
+        if btn(5) then fire_blaster() end
     end
+
 end
 
 function draw_ship()
@@ -339,8 +314,8 @@ end
 
 function fire_blaster()
     if blaster_timer <= 0 then
-        make_bullet(ship.x - 3, ship.y)
-        make_bullet(ship.x + 3, ship.y)
+        make_bullet(bullets, ship.x - 3, ship.y)
+        make_bullet(bullets, ship.x + 3, ship.y)
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
         sfx(2)
@@ -349,13 +324,13 @@ function fire_blaster()
 end
 
 function fire_missile()
-    if t - time_of_last_shot > b_cooldwn then
+    if missile_timer <= 0 then
         make_missile(ship.x - 4, ship.y)
         make_missile(ship.x + 4, ship.y)
         small_flash(ship.x + 1, ship.y - 1)
         small_flash(ship.x + 7, ship.y - 1)
         sfx(0)
-        time_of_last_shot = t
+        missile_timer = 30
     end
 end
 
@@ -421,7 +396,7 @@ function missle_trail(x, y)
     p.ddy = 0.1
     p.lifetime = 5 + rnd(30)
     p.age = 0
-    p.rad_tbl = { 1, 0 }
+    p.rad_tbl = { 2, 1, 1, 0 }
     p.col_tbl = { 7, 7, 10, 9, 8, 4, 4, 4, 7, 5, 5, 5 }
     add(particles, p)
 end
@@ -513,12 +488,15 @@ end
 --weapons
 missiles = {}
 bullets = {}
+enemy_bullets = {}
 blaster_timer = 0
+missile_timer = 0
 
-function make_bullet(x, y)
+function make_bullet(bullets_array, x, y)
     local b = {}
     b.x = x
     b.y = y
+    b.dx = 0
     b.dy = -6
     b.hitbox = {
         x0 = 2,
@@ -526,10 +504,11 @@ function make_bullet(x, y)
         x1 = 5,
         y1 = 6
     }
-    add(bullets, b)
+    add(bullets_array, b)
 end
 
 function update_bullet(b)
+    b.x += b.dx
     b.y += b.dy
     if b.y < -8 then
         del(bullets, b)
@@ -544,7 +523,7 @@ function make_missile(x, y)
     local m = {}
     m.x = x
     m.y = y
-    m.dy = -100
+    m.dy = -3
     m.hitbox = {
         x0 = 3,
         y0 = 0,
@@ -555,10 +534,9 @@ function make_missile(x, y)
 end
 
 function update_missile(m)
-    m.y += m.dy * dt
+    m.y += m.dy
     if m.y < 0 then
         del(missiles, m)
-        sfx(1)
     end
     missle_trail(m.x + 4, m.y + 10)
 end
@@ -630,11 +608,10 @@ function add_event(t, e, num)
 end
 
 function update_wave_spawner()
-    local FIRST_EVENT = 1
-    local event = schedule[FIRST_EVENT]
-    if event and t >= event.t then
-        deli(schedule, FIRST_EVENT)
-        handle_event(event)
+    local next_event = schedule[1]
+    if next_event and t >= next_event.t then
+        deli(schedule, 1)
+        handle_event(next_event)
     end
 end
 
@@ -644,6 +621,42 @@ function handle_event(e)
     for i = 1, num do
         add_intercepter(20 + rnd(80), -20 + rnd(20))
     end
+end
+-->8
+--brain
+stationary = {
+    {"sto"}
+}
+
+slow_advance = {
+    {"hea", 0.75, 0.3}
+}
+
+seek_and_destroy = {
+    {"hea", 0.6, 0.9},
+    {"wai", 30},
+    {"hea", 0.25, 0.8},
+    {"wai", 30},
+    {"sto"},
+    {"wai", 60},
+    {"hea", 0.5, 2}
+}
+
+function process_brain(e)
+    if e.brain_inst_pointer > #e.brain then
+        return
+    end
+    local inst = e.brain[e.brain_inst_pointer]
+    if inst[1] == "hea" then
+        e.angle = inst[2]
+        e.speed = inst[3]
+    elseif inst[1] == "sto" then
+        e.angle = 0.0
+        e.speed = 0.0
+    elseif inst[1] == "wai" then
+        e.wait_timer = inst[2]
+    end
+    e.brain_inst_pointer += 1
 end
 
 __gfx__
