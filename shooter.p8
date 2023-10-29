@@ -681,7 +681,9 @@ slow_advance_and_shoot = {
     {"wai", 30},
     {"tar", 2},
     {"wai", 30},
-    {"tar", 2}
+    {"tar", 2},
+    {"wai", 30},
+    {"hea", 0.75, 1.5}
 }
 
 slow_advance = {
