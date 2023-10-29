@@ -81,7 +81,6 @@ function init_play()
     ship.dx = 0
     ship.dir = "straight"
     lives = 3
-    add_event(60, 0, 5)
 end
 
 function update_play()
@@ -635,34 +634,6 @@ function enemy_player_collisions()
     end
 end
 -->8
---waves
-schedule = {}
-
-function add_event(t, e, num)
-    local s = {
-        t = t,
-        e = e,
-        num = num
-    }
-    add(schedule, s)
-end
-
-function update_wave_spawner()
-    local next_event = schedule[1]
-    if next_event and t >= next_event.t then
-        deli(schedule, 1)
-        handle_event(next_event)
-    end
-end
-
-function handle_event(e)
-    local enemy = e.e
-    local num = e.num
-    for i = 1, num do
-        add_intercepter(20 + rnd(80), -20 + rnd(20), seek_and_destroy)
-    end
-end
--->8
 --brain
 stationary = {
     {"sto"}
@@ -750,6 +721,28 @@ function target(enemy, speed)
     local dx = cos(angle) * speed
     local dy = sin(angle) * speed
     make_enemy_bullet(enemy.x, enemy.y, dx, dy)
+end
+-->8
+--waves
+schedule = {
+    {60, 20, -10, slow_advance_and_shoot},
+    {60, 10, -10, slow_advance_and_shoot},
+    {60, 80, -10, slow_advance_and_shoot},
+    {60, 90, -10, slow_advance_and_shoot},
+    {360, 20, -10, slow_advance_and_shoot},
+    {360, 10, -10, slow_advance_and_shoot},
+    {360, 80, -10, slow_advance_and_shoot},
+    {360, 90, -10, slow_advance_and_shoot}
+}
+schedule_index = 1
+
+function update_wave_spawner()
+    local spawn_event = schedule[schedule_index]
+    while spawn_event and t >= spawn_event[1] do
+        add_intercepter(spawn_event[2], spawn_event[3], spawn_event[4])
+        schedule_index += 1
+        spawn_event = schedule[schedule_index]
+    end
 end
 
 __gfx__
