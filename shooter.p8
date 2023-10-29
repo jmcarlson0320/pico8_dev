@@ -4,9 +4,14 @@ __lua__
 
 -- main
 -- todo
+-- cleanup enemies and bullets when off screen
 -- player ship explosion
--- enemy shots
--- enemy types -- - bigger enemies -- enemy behavior
+-- enemy types
+-- - bigger enemies
+-- simplify scheduler
+--  - use a simple table
+--  - {time, x, y, type, brain}
+--  - allow events at same time in succession for wave spawning
 -- wave system
 -- general animation component/system
 -- animations should use local t
@@ -97,7 +102,7 @@ function update_play()
         init_gameover()
     end
     if btnp(4) then
-        add_intercepter(20 + rnd(80), -10)
+        add_intercepter(20 + rnd(80), -10, slow_advance_and_shoot)
     end
 end
 
@@ -125,7 +130,7 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_intercepter(60, 10)
+    add_intercepter(60, 10, slow_advance_and_shoot)
 end
 
 function update_sandbox()
@@ -163,7 +168,7 @@ end
 -- enemies
 enemies = {}
 
-function add_intercepter(x, y)
+function add_intercepter(x, y, brain)
     local e = {}
     e.x = x
     e.y = y
@@ -180,7 +185,7 @@ function add_intercepter(x, y)
         y1 = 3
     }
     e.flash = 0
-    e.brain = slow_advance_and_shoot
+    e.brain = brain
     e.brain_inst_pointer = 1
     e.wait_timer = 0
     add(enemies, e)
@@ -242,7 +247,6 @@ slow_drift = {
         ax = 0.1, tx = 90, px = 0,
         ay = 0.05, ty = 60, py = 0
 }
-
 -->8
 --ship
 function make_ship()
@@ -655,7 +659,7 @@ function handle_event(e)
     local enemy = e.e
     local num = e.num
     for i = 1, num do
-        add_intercepter(20 + rnd(80), -20 + rnd(20))
+        add_intercepter(20 + rnd(80), -20 + rnd(20), seek_and_destroy)
     end
 end
 -->8
@@ -706,29 +710,46 @@ function process_brain(e)
     end
     local inst = e.brain[e.brain_inst_pointer]
     if inst[1] == "hea" then
-        e.angle = inst[2]
-        e.speed = inst[3]
+        heading(e, inst[2], inst[3])
     elseif inst[1] == "sto" then
-        e.angle = 0.0
-        e.speed = 0.0
+        stop(e)
     elseif inst[1] == "wai" then
-        e.wait_timer = inst[2]
+        wait(e, inst[2])
     elseif inst[1] == "fir" then
-        local angle = inst[2]
-        local speed = inst[3]
-        local dx = cos(angle) * speed
-        local dy = sin(angle) * speed
-        make_enemy_bullet(e.x, e.y, dx, dy)
+        fire(e, e.x, e.y, inst[2], inst[3])
     elseif inst[1] == "tar" then
-        local to_target_x = ship.x - e.x
-        local to_target_y = ship.y - e.y
-        local angle = atan2(to_target_x, to_target_y)
-        local speed = inst[2]
-        local dx = cos(angle) * speed
-        local dy = sin(angle) * speed
-        make_enemy_bullet(e.x, e.y, dx, dy)
+        target(e, inst[2])
     end
     e.brain_inst_pointer += 1
+end
+
+function heading(enemy, angle, speed)
+    enemy.angle = angle
+    enemy.speed = speed
+end
+
+function stop(enemy)
+    enemy.angle = 0.0
+    enemy.speed = 0.0
+end
+
+function wait(enemy, frames)
+    enemy.wait_timer = frames
+end
+
+function fire(enemy, angle, speed)
+    local dx = cos(angle) * speed
+    local dy = sin(angle) * speed
+    make_enemy_bullet(enemy.x, enemy.y, dx, dy)
+end
+
+function target(enemy, speed)
+    local to_target_x = ship.x - enemy.x
+    local to_target_y = ship.y - enemy.y
+    local angle = atan2(to_target_x, to_target_y)
+    local dx = cos(angle) * speed
+    local dy = sin(angle) * speed
+    make_enemy_bullet(enemy.x, enemy.y, dx, dy)
 end
 
 __gfx__
