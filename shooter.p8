@@ -86,10 +86,12 @@ function update_play()
     update_wave_spawner()
     foreach(enemies, update_enemy)
     foreach(missiles, update_missile)
-    foreach(bullets, update_bullet)
+    foreach(blaster_bullets, update_bullet)
+    foreach(enemy_bullets, update_bullet)
     foreach(particles, update_particle)
     foreach(stars, update_star)
     bullet_enemy_collisions()
+    bullet_player_collisions()
     enemy_player_collisions()
     if lives <= 0 then
         init_gameover()
@@ -104,7 +106,8 @@ function draw_play()
     foreach(stars, draw_star)
     draw_ship()
     foreach(missiles, draw_missile)
-    foreach(bullets, draw_bullet)
+    foreach(blaster_bullets, draw_bullet)
+    foreach(enemy_bullets, draw_bullet)
     foreach(particles, draw_particle)
     foreach(enemies, draw_enemy)
     draw_ui(4, 4)
@@ -118,20 +121,22 @@ function draw_ui(x, y)
     print(score, x + 50, y, 7)
 end
 -->8
--- test
+-- sandbox
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_intercepter(64, 0)
+    add_intercepter(60, 10)
 end
 
 function update_sandbox()
     foreach(enemies, update_enemy)
+    foreach(enemy_bullets, update_bullet)
 end
 
 function draw_sandbox()
     cls(0)
     foreach(enemies, draw_enemy)
+    foreach(enemy_bullets, draw_bullet)
     print("sandbox\n", 0, 0, 7)
 end
 -->8
@@ -175,7 +180,7 @@ function add_intercepter(x, y)
         y1 = 3
     }
     e.flash = 0
-    e.brain = slow_advance
+    e.brain = slow_advance_and_shoot
     e.brain_inst_pointer = 1
     e.wait_timer = 0
     add(enemies, e)
@@ -314,8 +319,8 @@ end
 
 function fire_blaster()
     if blaster_timer <= 0 then
-        make_bullet(bullets, ship.x - 3, ship.y)
-        make_bullet(bullets, ship.x + 3, ship.y)
+        make_blaster_bullet(ship.x - 3, ship.y)
+        make_blaster_bullet(ship.x + 3, ship.y)
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
         sfx(2)
@@ -339,8 +344,8 @@ function reset_ship()
 end
 
 dir_code = { [0] = 0, 1, 2, 0, 3, 5, 6, 3, 4, 8, 7, 4, 0, 1, 2, 0 }
-x_dir = { [0] = 0, -1, 1, 0, 0, -0.707, 0.707, 0.707, -0.707 }
-y_dir = { [0] = 0, 0, 0, -1, 1, -0.707, -0.707, 0.707, 0.707 }
+x_dir = { [0] = 0, -1, 1, 0, 0, -0.8, 0.8, 0.8, -0.8 }
+y_dir = { [0] = 0, 0, 0, -1, 1, -0.8, -0.8, 0.8, 0.8 }
 
 function get_dir_from_input()
     local msk = btn() & 0xf
@@ -487,36 +492,53 @@ end
 -->8
 --weapons
 missiles = {}
-bullets = {}
+blaster_bullets = {}
 enemy_bullets = {}
 blaster_timer = 0
 missile_timer = 0
 
-function make_bullet(bullets_array, x, y)
+function make_blaster_bullet(x, y)
     local b = {}
     b.x = x
     b.y = y
     b.dx = 0
     b.dy = -6
+    b.sprite = 11
     b.hitbox = {
         x0 = 2,
         y0 = 1,
         x1 = 5,
         y1 = 6
     }
-    add(bullets_array, b)
+    add(blaster_bullets, b)
+end
+
+function make_enemy_bullet(x, y, dx, dy)
+    local b = {}
+    b.x = x
+    b.y = y
+    b.dx = dx
+    b.dy = dy
+    b.sprite = 12
+    b.hitbox = {
+        x0 = 2,
+        y0 = 2,
+        x1 = 5,
+        y1 = 5
+    }
+    add(enemy_bullets, b)
 end
 
 function update_bullet(b)
     b.x += b.dx
     b.y += b.dy
     if b.y < -8 then
-        del(bullets, b)
+        del(blaster_bullets, b)
     end
 end
 
 function draw_bullet(b)
-    spr(11, b.x, b.y)
+    spr(b.sprite, b.x, b.y)
 end
 
 function make_missile(x, y)
@@ -568,11 +590,11 @@ function has_collided(a, b)
 end
 
 function bullet_enemy_collisions()
-    for b in all(bullets) do
+    for b in all(blaster_bullets) do
         for e in all(enemies) do
             if has_collided(b, e) then
                 e.flash = 4
-                del(bullets, b)
+                del(blaster_bullets, b)
                 sparks(e.x + 4, e.y + 2)
                 small_flash(e.x + 4, e.y + 2)
                 e.hp -= 4
@@ -582,8 +604,22 @@ function bullet_enemy_collisions()
     end
 end
 
-function enemy_player_collisions()
+function bullet_player_collisions()
     if ship.invul > 0 then return end
+    for b in all(enemy_bullets) do
+        if has_collided(b, ship) then
+            del(enemy_bullets, b)
+            sparks(ship.x + 4, ship.y + 2)
+            small_flash(ship.x + 4, ship.y + 2)
+            sfx(3)
+            reset_ship()
+            lives -=1
+            return
+        end
+    end
+end
+
+function enemy_player_collisions()
     for e in all(enemies) do
         if has_collided(e, ship) then
             e.flash = 4
@@ -628,6 +664,26 @@ stationary = {
     {"sto"}
 }
 
+slow_advance_and_shoot = {
+    {"hea", 0.75, 0.3},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 30},
+    {"tar", 2}
+}
+
 slow_advance = {
     {"hea", 0.75, 0.3}
 }
@@ -655,18 +711,32 @@ function process_brain(e)
         e.speed = 0.0
     elseif inst[1] == "wai" then
         e.wait_timer = inst[2]
+    elseif inst[1] == "fir" then
+        local angle = inst[2]
+        local speed = inst[3]
+        local dx = cos(angle) * speed
+        local dy = sin(angle) * speed
+        make_enemy_bullet(e.x, e.y, dx, dy)
+    elseif inst[1] == "tar" then
+        local to_target_x = ship.x - e.x
+        local to_target_y = ship.y - e.y
+        local angle = atan2(to_target_x, to_target_y)
+        local speed = inst[2]
+        local dx = cos(angle) * speed
+        local dy = sin(angle) * speed
+        make_enemy_bullet(e.x, e.y, dx, dy)
     end
     e.brain_inst_pointer += 1
 end
 
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
-00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000097790000000000000000000000000000000000
-00700700020002808200002808200020088088000000200000008000000000000000900000008000000670000097790000000000000000000000000000000000
-000770000207c2808207c0280827c020088888000000000000000000000000000000000000000000006007000097790000000000000000000000000000000000
-0007700002282280828888280822822000808000000000000000000000000000000000000000000000000000009aa90000000000000000000000000000000000
-0070070002022880880220880882202000000000000000000000000000000000000000000000000000000000009aa90000000000000000000000000000000000
-0000000002000800080000800080002000000000000000000000000000000000000000000000000000000000009aa90000000000000000000000000000000000
+00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000097790000888800000000000000000000000000
+00700700020002808200002808200020088088000000200000008000000000000000900000008000000670000097790008eeee80000000000000000000000000
+000770000207c2808207c0280827c020088888000000000000000000000000000000000000000000006007000097790008e77e80000000000000000000000000
+0007700002282280828888280822822000808000000000000000000000000000000000000000000000000000009aa90008e77e80000000000000000000000000
+0070070002022880880220880882202000000000000000000000000000000000000000000000000000000000009aa90008eeee80000000000000000000000000
+0000000002000800080000800080002000000000000000000000000000000000000000000000000000000000009aa90000888800000000000000000000000000
 0000000005000d000d0000d000d00050000000000000000000000000000000000000000000000000000000000009900000000000000000000000000000000000
 0000000003000b000b0000b000b00030000000000000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000003000b000b0000b000b0003000b0b0000000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000
