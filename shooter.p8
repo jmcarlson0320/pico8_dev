@@ -8,10 +8,6 @@ __lua__
 -- player ship explosion
 -- enemy types
 -- - bigger enemies
--- simplify scheduler
---  - use a simple table
---  - {time, x, y, type, brain}
---  - allow events at same time in succession for wave spawning
 -- wave system
 -- general animation component/system
 -- animations should use local t
@@ -49,7 +45,6 @@ function update_title()
     if btnp(4) or btnp(5) then
         init_play()
     end
-
     foreach(stars, update_star)
     foreach(particles, update_particle)
 end
@@ -101,7 +96,8 @@ function update_play()
         init_gameover()
     end
     if btnp(4) then
-        add_intercepter(20 + rnd(80), -10, slow_advance_and_shoot)
+        t = 0
+        schedule_index = 1
     end
 end
 
@@ -243,7 +239,7 @@ function drift(e)
 end
 
 slow_drift = {
-        ax = 0.1, tx = 90, px = 0,
+        ax = 0.2, tx = 90, px = 0,
         ay = 0.05, ty = 60, py = 0
 }
 -->8
@@ -283,7 +279,6 @@ function update_ship()
     ship.y += y_dir[ship.dir] * ship.spd
     ship.x = mid(0, ship.x, 120)
     ship.y = mid(0, ship.y, 120)
-
     if ship.invul > 0 then
         ship.invul -= 1
         if ship.invul % 3 == 0 then
@@ -296,15 +291,14 @@ function update_ship()
         if btn(4) then fire_missile() end
         if btn(5) then fire_blaster() end
     end
-
 end
 
 function draw_ship()
-    if ship.draw == false then return end
-
+    if ship.draw == false then
+        return
+    end
     local sp = ship.sprites[ship.dir]
     spr(sp, ship.x, ship.y)
-
     local left_offset = 0
     local right_offset = 0
     if sp == 35 then
@@ -312,7 +306,6 @@ function draw_ship()
     elseif sp == 33 then
         right_offset = -1
     end
-
     local frames = { 6, 7, 8, 9 }
     local ticks_per_frame = 3
     local i = flr(t / ticks_per_frame % #frames) + 1
@@ -639,6 +632,18 @@ stationary = {
     {"sto"}
 }
 
+slow_advance = {
+    {"hea", 0.75, 0.3}
+}
+
+attack_pattern_1 = {
+    {"hea", 0.75, 1},
+    {"wai", 30},
+    {"tar", 2},
+    {"wai", 55},
+    {"hea", 0.75, 2}
+}
+
 slow_advance_and_shoot = {
     {"hea", 0.75, 0.3},
     {"wai", 30},
@@ -659,20 +664,6 @@ slow_advance_and_shoot = {
     {"tar", 2},
     {"wai", 30},
     {"hea", 0.75, 1.5}
-}
-
-slow_advance = {
-    {"hea", 0.75, 0.3}
-}
-
-seek_and_destroy = {
-    {"hea", 0.6, 0.9},
-    {"wai", 30},
-    {"hea", 0.25, 0.8},
-    {"wai", 30},
-    {"sto"},
-    {"wai", 60},
-    {"hea", 0.5, 2}
 }
 
 function process_brain(e)
@@ -725,14 +716,16 @@ end
 -->8
 --waves
 schedule = {
-    {60, 20, -10, slow_advance_and_shoot},
-    {60, 10, -10, slow_advance_and_shoot},
-    {60, 80, -10, slow_advance_and_shoot},
-    {60, 90, -10, slow_advance_and_shoot},
-    {360, 20, -10, slow_advance_and_shoot},
-    {360, 10, -10, slow_advance_and_shoot},
-    {360, 80, -10, slow_advance_and_shoot},
-    {360, 90, -10, slow_advance_and_shoot}
+    {60, 64, -10, attack_pattern_1},
+    {75, 74, -10, attack_pattern_1},
+    {90, 84, -10, attack_pattern_1},
+    {105, 94, -10, attack_pattern_1},
+    {120, 104, -10, attack_pattern_1},
+    {130, 4, -10, attack_pattern_1},
+    {145, 14, -10, attack_pattern_1},
+    {160, 24, -10, attack_pattern_1},
+    {175, 34, -10, attack_pattern_1},
+    {190, 44, -10, attack_pattern_1}
 }
 schedule_index = 1
 
