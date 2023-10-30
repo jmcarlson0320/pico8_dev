@@ -639,8 +639,14 @@ slow_advance = {
 attack_pattern_1 = {
     {"hea", 0.75, 1},
     {"wai", 30},
-    {"tar", 2},
-    {"wai", 55},
+    {"tar", 4},
+    {"wai", 1},
+    {"tar", 4},
+    {"wai", 1},
+    {"tar", 4},
+    {"wai", 1},
+    {"tar", 4},
+    {"wai", 30},
     {"hea", 0.75, 2}
 }
 
@@ -716,16 +722,12 @@ end
 -->8
 --waves
 schedule = {
-    {60, 64, -10, attack_pattern_1},
-    {75, 74, -10, attack_pattern_1},
-    {90, 84, -10, attack_pattern_1},
-    {105, 94, -10, attack_pattern_1},
-    {120, 104, -10, attack_pattern_1},
-    {130, 4, -10, attack_pattern_1},
-    {145, 14, -10, attack_pattern_1},
-    {160, 24, -10, attack_pattern_1},
-    {175, 34, -10, attack_pattern_1},
-    {190, 44, -10, attack_pattern_1}
+    {00, 10, -10, attack_pattern_1},
+    {10, 25, -10, attack_pattern_1},
+    {20, 40, -10, attack_pattern_1},
+    {80, 110, -10, attack_pattern_1},
+    {90, 95, -10, attack_pattern_1},
+    {100, 80, -10, attack_pattern_1}
 }
 schedule_index = 1
 
