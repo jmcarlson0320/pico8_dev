@@ -169,7 +169,7 @@ function add_intercepter(x, y, brain)
     e.y = y
     e.angle = 0
     e.speed = 0
-    e.hp = 5
+    e.hp = 4
     e.score = 10
     e.sprite = 65
     e.drift_params = slow_drift
@@ -187,6 +187,12 @@ function add_intercepter(x, y, brain)
 end
 
 function update_enemy(e)
+    if e.x < -16 or
+       e.x > 142 or
+       e.y > 142 then
+        del(enemies, e)
+        return
+    end
     if e.hp <= 0 then
         explode_enemy(e)
         return
@@ -250,7 +256,7 @@ function make_ship()
     s.y = 112
     s.dir = 0
     s.lastdir = 0
-    s.spd = 2
+    s.spd = 2.0
     s.sprites = {
         [1] = 33,
         [5] = 33,
@@ -528,8 +534,12 @@ end
 function update_bullet(b)
     b.x += b.dx
     b.y += b.dy
-    if b.y < -8 then
+    if b.x < -8 or
+       b.x > 136 or
+       b.y < -8 or
+       b.y > 136 then
         del(blaster_bullets, b)
+        del(enemy_bullets, b)
     end
 end
 
