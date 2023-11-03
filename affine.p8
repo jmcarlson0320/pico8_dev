@@ -1,42 +1,45 @@
 pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
--- main
-
+t = 0.2
 function _init()
-    background = 1
-    red = 150
-    blue = 0
-    green = 10
-    alpha = 50
-    local my_layout = {
-        { 1, 2, 3, 4 },
-        { 5 },
-        { 6 },
-        { 7 },
-        { 8 }
+    p1 = {x = 10, y = 30}
+    p2 = {x = 100, y = 100}
+    my_layout = {
+        {1},
+        {2},
+        {3}
     }
     set_layout(my_layout)
 end
 
 function _update()
+    cls()
+    local p = affine_comb(p1, p2, t)
+    line(p1.x, p1.y, p2.x, p2.y, 6)
+    circfill(p.x, p.y, 2, 10)
+    circfill(p1.x, p1.y, 2, 8)
+    circfill(p2.x, p2.y, 2, 12)
     update_cursor()
+    t = do_slider(1, "t", 0, 100, is_cursor_over(1), 0, 1, t, 50)
+    p1.x = do_slider(2, "p1.x", 0, 110, is_cursor_over(2), 0, 128, p1.x, 50)
+    p1.y = do_slider(3, "p1.y", 0, 120, is_cursor_over(3), 0, 128, p1.y, 50)
+    print("affine combination demo", 0, 0, 6)
+    print("p = ap1 + bp2")
+    print("where a + b = 1")
+    print("a = 1 - t")
+    print("b = t")
+    flip()
 end
 
-function _draw()
-    cls(background)
-    if do_button(1, "file", 0, 0, is_cursor_over(1)) then
-        background += 1
-    end
-    do_button(2, "settings", 20, 0, is_cursor_over(2))
-    do_button(3, "edit", 56, 0, is_cursor_over(3))
-    do_button(4, "run", 76, 0, is_cursor_over(4))
-    red = do_slider(5, "red", 0, 10, is_cursor_over(5), 0, 256, red, 25)
-    blue = do_slider(6, "blue", 0, 20, is_cursor_over(6), 0, 1, blue, 25)
-    green = do_slider(7, "green", 0, 30, is_cursor_over(7), 0, 250, green, 25)
-    alpha = do_slider(8, "alpha", 0, 40, is_cursor_over(8), 0, 100, alpha, 25)
+function affine_comb(p1, p2, t)
+    local a = 1 - t
+    local b = t
+    p = {}
+    p.x = a * p1.x + b * p2.x
+    p.y = a * p1.y + b * p2.y
+    return p
 end
-
 -->8
 -- ui
 
