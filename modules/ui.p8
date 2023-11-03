@@ -9,7 +9,7 @@ function _init()
     blue = 0
     green = 10
     alpha = 50
-    my_layout = {
+    local my_layout = {
         { 1, 2, 3, 4 },
         { 5 },
         { 6 },
@@ -31,25 +31,26 @@ function _draw()
     do_button(2, "settings", 20, 0, cursor_over(2))
     do_button(3, "edit", 56, 0, cursor_over(3))
     do_button(4, "run", 76, 0, cursor_over(4))
-    red = do_slider(5, 0, 10, cursor_over(5), 0, 256, red, 50)
-    blue = do_slider(6, 0, 20, cursor_over(6), 0, 1, blue, 50)
-    green = do_slider(7, 0, 30, cursor_over(7), 0, 250, green, 50)
-    alpha = do_slider(8, 0, 40, cursor_over(8), 0, 100, alpha, 50)
+    red = do_slider(5, 0, 10, cursor_over(5), 0, 256, red, 25)
+    blue = do_slider(6, 0, 20, cursor_over(6), 0, 1, blue, 25)
+    green = do_slider(7, 0, 30, cursor_over(7), 0, 250, green, 25)
+    alpha = do_slider(8, 0, 40, cursor_over(8), 0, 100, alpha, 25)
 end
 
 -->8
 -- ui
 
 active = 0
-curs_x = 1
-curs_y = 1
 
 layout = {{}}
+curs_x = 1
+curs_y = 1
 
 function set_layout(new_layout)
     layout = new_layout
     curs_x = 1
     curs_y = 1
+    active = 0
 end
 
 function update_cursor()
