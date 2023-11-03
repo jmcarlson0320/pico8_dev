@@ -31,10 +31,10 @@ function _draw()
     do_button(2, "settings", 20, 0, cursor_over(2))
     do_button(3, "edit", 56, 0, cursor_over(3))
     do_button(4, "run", 76, 0, cursor_over(4))
-    red = do_slider(5, "red", 0, 10, cursor_over(5), 0, 256, red, 25)
-    blue = do_slider(6, "blue", 0, 20, cursor_over(6), 0, 1, blue, 25)
-    green = do_slider(7, "green", 0, 30, cursor_over(7), 0, 250, green, 25)
-    alpha = do_slider(8, "alpha", 0, 40, cursor_over(8), 0, 100, alpha, 25)
+    red = do_slider(5, "red", 0, 20, cursor_over(5), 0, 256, red, 25)
+    blue = do_slider(6, "blue", 0, 30, cursor_over(6), 0, 1, blue, 25)
+    green = do_slider(7, "green", 0, 40, cursor_over(7), 0, 250, green, 25)
+    alpha = do_slider(8, "alpha", 0, 50, cursor_over(8), 0, 100, alpha, 25)
 end
 
 -->8
@@ -94,7 +94,7 @@ function draw_button(id, txt, x, y, over)
         rectfill(x, y, x + w, y + h, 8)
     end
     if over then
-        rect(x, y, x + w, y + h, 6)
+        rect(x, y, x + w, y + h, 13)
     end
     print(txt, x + 2, y + 2, 6)
 end
@@ -136,8 +136,8 @@ function draw_slider(id, txt, x, y, over, min, max, val, length)
         line(x + 2 + slider_offset, y + 2, x + 2 + slider_offset, y + 4, 8)
     end
     if over then
-        print(txt..":"..val, x + length + 6, y + 1, 6)
-        rect(x, y, x + length + 4, y + 6, 6)
+        print(txt..":"..val, x + length + 6, y + 1, 13)
+        rect(x, y, x + length + 4, y + 6, 13)
     end
 end
 
