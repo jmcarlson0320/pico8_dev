@@ -25,16 +25,16 @@ end
 
 function _draw()
     cls(background)
-    if do_button(1, "file", 0, 0, is_cursor_over(1)) then
+    if do_button(1, "file", 0, 0, cursor_over(1)) then
         background += 1
     end
-    do_button(2, "settings", 20, 0, is_cursor_over(2))
-    do_button(3, "edit", 56, 0, is_cursor_over(3))
-    do_button(4, "run", 76, 0, is_cursor_over(4))
-    red = do_slider(5, "red", 0, 10, is_cursor_over(5), 0, 256, red, 25)
-    blue = do_slider(6, "blue", 0, 20, is_cursor_over(6), 0, 1, blue, 25)
-    green = do_slider(7, "green", 0, 30, is_cursor_over(7), 0, 250, green, 25)
-    alpha = do_slider(8, "alpha", 0, 40, is_cursor_over(8), 0, 100, alpha, 25)
+    do_button(2, "settings", 20, 0, cursor_over(2))
+    do_button(3, "edit", 56, 0, cursor_over(3))
+    do_button(4, "run", 76, 0, cursor_over(4))
+    red = do_slider(5, "red", 0, 10, cursor_over(5), 0, 256, red, 25)
+    blue = do_slider(6, "blue", 0, 20, cursor_over(6), 0, 1, blue, 25)
+    green = do_slider(7, "green", 0, 30, cursor_over(7), 0, 250, green, 25)
+    alpha = do_slider(8, "alpha", 0, 40, cursor_over(8), 0, 100, alpha, 25)
 end
 
 -->8
@@ -62,7 +62,7 @@ function update_cursor()
     curs_x = mid(1, curs_x, #layout[curs_y])
 end
 
-function is_cursor_over(id)
+function cursor_over(id)
     return id == layout[curs_y][curs_x]
 end
 
@@ -109,14 +109,20 @@ function do_slider_logic(id, over, min, max, val, length)
     local stepsize = (max - min) / length
     if id == active then
         if btn(5) then
-            if btnp(0) then val -= stepsize end
-            if btnp(1) then val += stepsize end
-        else
             if btn(0) then val -= stepsize end
             if btn(1) then val += stepsize end
+        elseif btn(4) then
+            if btnp(0) then val -= stepsize end
+            if btnp(1) then val += stepsize end
+        end
+        if (not btn(4) and not btn(5)) or
+           (not over) then
+            active = nil
         end
     elseif over then
-        active = id
+        if btn(4) or btn(5) then
+            active = id
+        end
     end
     return mid(min, val, max)
 end
@@ -125,10 +131,13 @@ function draw_slider(id, txt, x, y, over, min, max, val, length)
     local norm = (val - min) / (max - min)
     local slider_offset = flr(norm * length + 0.5)
     line(x + 2, y + 3, x + length + 2, y + 3, 6)
-    line(x + 2 + slider_offset, y + 2, x + 2 + slider_offset, y + 4, 5)
+    line(x + 2 + slider_offset, y + 2, x + 2 + slider_offset, y + 4, 13)
     if id == active then
         line(x + 2 + slider_offset, y + 2, x + 2 + slider_offset, y + 4, 8)
-        print(txt..":"..val, x + length + 6, y + 1, 5)
+    end
+    if over then
+        print(txt..":"..val, x + length + 6, y + 1, 6)
+        rect(x, y, x + length + 4, y + 6, 6)
     end
 end
 
