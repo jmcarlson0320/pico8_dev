@@ -3,38 +3,38 @@ version 41
 __lua__
 -- main
 
-layout = {
-    { 1, 2, 3, 4 },
-    { 5 },
-    { 6 },
-    { 7 },
-    { 8 }
-}
-
 function _init()
     background = 1
     red = 150
     blue = 0
     green = 10
     alpha = 50
+    my_layout = {
+        { 1, 2, 3, 4 },
+        { 5 },
+        { 6 },
+        { 7 },
+        { 8 }
+    }
+    set_layout(my_layout)
 end
 
 function _update()
-    update_cursor(layout)
+    update_cursor()
 end
 
 function _draw()
     cls(background)
-    if do_button(1, "file", 0, 0, cursor_over(layout, 1)) then
+    if do_button(1, "file", 0, 0, cursor_over(1)) then
         background += 1
     end
-    do_button(2, "settings", 20, 0, cursor_over(layout, 2))
-    do_button(3, "edit", 56, 0, cursor_over(layout, 3))
-    do_button(4, "run", 76, 0, cursor_over(layout, 4))
-    red = do_slider(5, 0, 10, cursor_over(layout, 5), 0, 256, red, 50)
-    blue = do_slider(6, 0, 20, cursor_over(layout, 6), 0, 1, blue, 50)
-    green = do_slider(7, 0, 30, cursor_over(layout, 7), 0, 250, green, 50)
-    alpha = do_slider(8, 0, 40, cursor_over(layout, 8), 0, 100, alpha, 50)
+    do_button(2, "settings", 20, 0, cursor_over(2))
+    do_button(3, "edit", 56, 0, cursor_over(3))
+    do_button(4, "run", 76, 0, cursor_over(4))
+    red = do_slider(5, 0, 10, cursor_over(5), 0, 256, red, 50)
+    blue = do_slider(6, 0, 20, cursor_over(6), 0, 1, blue, 50)
+    green = do_slider(7, 0, 30, cursor_over(7), 0, 250, green, 50)
+    alpha = do_slider(8, 0, 40, cursor_over(8), 0, 100, alpha, 50)
 end
 
 -->8
@@ -44,7 +44,15 @@ active = 0
 curs_x = 1
 curs_y = 1
 
-function update_cursor(layout)
+layout = {{}}
+
+function set_layout(new_layout)
+    layout = new_layout
+    curs_x = 1
+    curs_y = 1
+end
+
+function update_cursor()
     if btnp(0) then curs_x -= 1 end
     if btnp(1) then curs_x += 1 end
     if btnp(2) then curs_y -= 1 end
@@ -53,7 +61,7 @@ function update_cursor(layout)
     curs_x = mid(1, curs_x, #layout[curs_y])
 end
 
-function cursor_over(layout, id)
+function cursor_over(id)
     return id == layout[curs_y][curs_x]
 end
 
