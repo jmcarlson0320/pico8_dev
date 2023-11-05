@@ -132,7 +132,7 @@ animate=system({"animation",
   local s=e.sprite
   local i=0
   a.t+=1
-  i=flr(a.t/a.rate%#a.frames)+1
+  local i=flr(a.t/a.rate%#a.frames)+1
   s.sp=a.frames[i]
  end
 )
