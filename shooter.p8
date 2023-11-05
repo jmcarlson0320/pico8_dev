@@ -38,11 +38,9 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
-    init_weapon_timers()
 end
 
 function update_sandbox()
-    blaster_timer -= 1
     update_ship()
     foreach(blaster_bullets, update_bullet)
 end
@@ -93,7 +91,6 @@ function init_play()
     missiles = {}
     enemies = {}
     add_events_to_schedule()
-    init_weapon_timers()
     ship = make_ship()
     ship.x = 60
     ship.dx = 0
@@ -102,8 +99,6 @@ function init_play()
 end
 
 function update_play()
-    blaster_timer -= 1
-    missile_timer -= 1
     update_ship()
     update_schedule()
     foreach(enemies, update_enemy)
@@ -283,6 +278,8 @@ function make_ship()
     }
     s.invul = 0
     s.draw = true
+    s.blaster_timer = 0
+    s.missile_timer = 0
     return s
 end
 
@@ -304,6 +301,8 @@ function update_ship()
         if btn(4) then fire_missile() end
         if btn(5) then fire_blaster() end
     end
+    ship.blaster_timer -= 1
+    ship.missile_timer -= 1
 end
 
 function draw_ship()
@@ -327,24 +326,24 @@ function draw_ship()
 end
 
 function fire_blaster()
-    if blaster_timer <= 0 then
+    if ship.blaster_timer <= 0 then
         make_blaster_bullet(ship.x - 3, ship.y)
         make_blaster_bullet(ship.x + 3, ship.y)
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
         sfx(2)
-        blaster_timer = 4
+        ship.blaster_timer = 4
     end
 end
 
 function fire_missile()
-    if missile_timer <= 0 then
+    if ship.missile_timer <= 0 then
         make_missile(ship.x - 4, ship.y)
         make_missile(ship.x + 4, ship.y)
         small_flash(ship.x + 1, ship.y - 1)
         small_flash(ship.x + 7, ship.y - 1)
         sfx(0)
-        missile_timer = 30
+        ship.missile_timer = 30
     end
 end
 
@@ -504,9 +503,6 @@ missiles = {}
 blaster_bullets = {}
 enemy_bullets = {}
 
-blaster_timer = 0
-missile_timer = 0
-
 function make_blaster_bullet(x, y)
     local b = {}
     b.x = x
@@ -586,11 +582,6 @@ end
 
 function draw_missile(m)
     spr(10, m.x, m.y)
-end
-
-function init_weapon_timers()
-    time_of_last_shot = t
-    b_cooldwn = 15
 end
 
 -->8
@@ -747,37 +738,36 @@ end
 -->8
 --spawner
 
-function spawn_intercepter_wave(dir)
+function spawn_intercepter_wave(dir, x_coor)
     if dir == "top" then
-        add_intercepter(44, -20, slow_advance_and_shoot)
-        add_intercepter(64, -10, slow_advance_and_shoot)
-        add_intercepter(84, -20, slow_advance_and_shoot)
+        add_intercepter(x_coor, -10, slow_advance_and_shoot)
+        add_intercepter(x_coor + 10, -20, slow_advance_and_shoot)
     end
 end
 
 events = {
     {
+        time = 30,
+        fn = function()
+            spawn_intercepter_wave("top", 10)
+        end
+    },
+    {
         time = 60,
         fn = function()
-            spawn_intercepter_wave("top")
+            spawn_intercepter_wave("top", 100)
         end
     },
     {
-        time = 180,
+        time = 90,
         fn = function()
-            spawn_intercepter_wave("top")
+            spawn_intercepter_wave("top", 20)
         end
     },
     {
-        time = 300,
+        time = 120,
         fn = function()
-            spawn_intercepter_wave("top")
-        end
-    },
-    {
-        time = 420,
-        fn = function()
-            spawn_intercepter_wave("top")
+            spawn_intercepter_wave("top", 90)
         end
     }
 }
