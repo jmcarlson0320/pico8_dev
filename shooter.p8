@@ -23,7 +23,7 @@ end
 
 function _init()
     t = 0
-    init_sandbox()
+    init_title()
 end
 
 function _update()
@@ -697,14 +697,6 @@ slow_advance_and_shoot = {
     {"wai", 30},
     {"tar", 2},
     {"wai", 30},
-    {"tar", 2},
-    {"wai", 30},
-    {"tar", 2},
-    {"wai", 30},
-    {"tar", 2},
-    {"wai", 30},
-    {"tar", 2},
-    {"wai", 30},
     {"hea", 0.75, 1.5}
 }
 
@@ -769,8 +761,9 @@ end
 
 function spawn_intercepter_wave(dir, x_coor)
     if dir == "top" then
+        add_intercepter(x_coor - 30, -20, slow_advance_and_shoot)
         add_intercepter(x_coor, -10, slow_advance_and_shoot)
-        add_intercepter(x_coor + 10, -20, slow_advance_and_shoot)
+        add_intercepter(x_coor + 30, -20, slow_advance_and_shoot)
     end
 end
 
@@ -785,15 +778,93 @@ end
 
 events = {
     {
-        time = 1,
+        time = 150,
         fn = function()
             spawn_side_wave("right", 15)
         end
     },
     {
-        time = 110,
+        time = 360,
         fn = function()
             spawn_side_wave("right", 40)
+        end
+    },
+    {
+        time = 1,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 120,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 240,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 360,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 400,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 480,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 520,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 600,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 640,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 720,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 760,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 840,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
+        end
+    },
+    {
+        time = 880,
+        fn = function()
+            spawn_intercepter_wave("top", 64)
         end
     }
 }
