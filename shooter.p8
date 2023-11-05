@@ -4,6 +4,9 @@ __lua__
 
 -- main
 -- todo
+-- rotate enemy sprite based on dir
+-- bigger enemy sprites
+-- waves
 -- player ship explosion
 -- enemy types
 -- - bigger enemies
@@ -20,7 +23,7 @@ end
 
 function _init()
     t = 0
-    init_title()
+    init_sandbox()
 end
 
 function _update()
@@ -38,14 +41,19 @@ function init_sandbox()
     _drw = draw_sandbox
     ship=make_ship()
     add_events_to_schedule()
+    schedule_index = 1
+    t = 0
 end
 
 function update_sandbox()
+    if btnp(4) then
+        schedule_index = 1
+        t = 0
+    end
     update_schedule()
     update_ship()
     foreach(enemies, update_enemy)
     foreach(enemy_bullets, update_bullet)
-    foreach(blaster_bullets, update_bullet)
 end
 
 function draw_sandbox()
@@ -54,7 +62,6 @@ function draw_sandbox()
     draw_ship()
     foreach(enemies, draw_enemy)
     foreach(enemy_bullets, draw_enemy_bullet)
-    foreach(blaster_bullets, draw_blaster_bullet)
 
     print("sandbox\n", 0, 0, 7)
     print("enemy count: " .. #enemies)
@@ -251,7 +258,7 @@ function drift(e)
 end
 
 function create_slow_drift()
-    p = {
+    local p = {
         ax = 0.1, tx = 90, px = rnd(),
         ay = 0.1, ty = 60, py = rnd()
     }
@@ -658,9 +665,7 @@ stationary = {
 }
 
 fly_left = {
-    {"hea", 0.5, 1.5},
-    {"wai", 45},
-    {"tar", 2}
+    {"hea", 0.5, 1.5}
 }
 
 slow_advance = {
@@ -702,6 +707,15 @@ slow_advance_and_shoot = {
     {"wai", 30},
     {"hea", 0.75, 1.5}
 }
+
+function random_shot(min_t, max_t)
+    local wait_time = rnd_range(0, 60)
+    local random_shot = {
+        {"wai", wait_time},
+        {"tar", 2}
+    }
+    return random_shot
+end
 
 function process_brain(e)
     if e.brain_inst_pointer > #e.brain then
@@ -763,8 +777,8 @@ end
 function spawn_side_wave(dir, y_coor)
     if dir == "right" then
         add_intercepter(138, y_coor, fly_left)
-        add_intercepter(158, y_coor, fly_left)
-        add_intercepter(148, y_coor + 15, fly_left)
+        add_intercepter(158, y_coor, combine(fly_left, random_shot(0, 80)))
+        add_intercepter(148, y_coor + 15, combine(fly_left, random_shot(0, 80)))
         add_intercepter(168, y_coor + 15, fly_left)
     end
 end
@@ -802,6 +816,22 @@ function update_schedule()
             f()
         end
     end
+end
+-->8
+--utils
+function rnd_range(min, max)
+    return rnd(max - min) + min
+end
+
+function combine(t1, t2)
+    local new = {}
+    for e in all(t1) do
+        add(new, e)
+    end
+    for e in all(t2) do
+        add(new, e)
+    end
+    return new
 end
 
 __gfx__

@@ -20,7 +20,6 @@ function _init()
 end
 
 function _update()
-    update_cursor()
 end
 
 function _draw()
@@ -28,6 +27,7 @@ function _draw()
     if do_button(1, "file", 0, 0, cursor_over(1)) then
         background += 1
     end
+    update_cursor()
     do_button(2, "settings", 20, 0, cursor_over(2))
     do_button(3, "edit", 56, 0, cursor_over(3))
     do_button(4, "run", 76, 0, cursor_over(4))
