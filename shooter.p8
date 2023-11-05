@@ -4,10 +4,10 @@ __lua__
 
 -- main
 -- todo
+-- add weapon timers to ship code
 -- player ship explosion
 -- enemy types
 -- - bigger enemies
--- wave system
 -- general animation component/system
 -- animations should use local t
 -- power ups
@@ -21,7 +21,7 @@ end
 
 function _init()
     t = 0
-    init_sandbox()
+    init_title()
 end
 
 function _update()
@@ -38,21 +38,19 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
-    add_events_to_schedule()
+    init_weapon_timers()
 end
 
 function update_sandbox()
-    update_schedule()
-    foreach(enemies, update_enemy)
-    foreach(enemy_bullets, update_bullet)
+    blaster_timer -= 1
     update_ship()
+    foreach(blaster_bullets, update_bullet)
 end
 
 function draw_sandbox()
     cls(0)
     draw_ship()
-    foreach(enemies, draw_enemy)
-    foreach(enemy_bullets, draw_bullet)
+    foreach(blaster_bullets, draw_blaster_bullet)
     print("sandbox\n", 0, 0, 7)
     print("enemy count: " .. #enemies)
 end
@@ -94,6 +92,7 @@ function init_play()
     particles = {}
     missiles = {}
     enemies = {}
+    add_events_to_schedule()
     init_weapon_timers()
     ship = make_ship()
     ship.x = 60
@@ -106,7 +105,7 @@ function update_play()
     blaster_timer -= 1
     missile_timer -= 1
     update_ship()
-    update_wave_spawner()
+    update_schedule()
     foreach(enemies, update_enemy)
     foreach(missiles, update_missile)
     foreach(blaster_bullets, update_bullet)
@@ -130,8 +129,8 @@ function draw_play()
     foreach(stars, draw_star)
     draw_ship()
     foreach(missiles, draw_missile)
-    foreach(blaster_bullets, draw_bullet)
-    foreach(enemy_bullets, draw_bullet)
+    foreach(blaster_bullets, draw_blaster_bullet)
+    foreach(enemy_bullets, draw_enemy_bullet)
     foreach(particles, draw_particle)
     foreach(enemies, draw_enemy)
     draw_ui(4, 4)
@@ -264,7 +263,7 @@ function make_ship()
     s.y = 112
     s.dir = 0
     s.lastdir = 0
-    s.spd = 2.0
+    s.spd = 2.5
     s.sprites = {
         [1] = 33,
         [5] = 33,
@@ -334,7 +333,7 @@ function fire_blaster()
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
         sfx(2)
-        blaster_timer = 5
+        blaster_timer = 4
     end
 end
 
@@ -354,8 +353,8 @@ function reset_ship()
 end
 
 dir_code = { [0] = 0, 1, 2, 0, 3, 5, 6, 3, 4, 8, 7, 4, 0, 1, 2, 0 }
-x_dir = { [0] = 0, -1, 1, 0, 0, -0.8, 0.8, 0.8, -0.8 }
-y_dir = { [0] = 0, 0, 0, -1, 1, -0.8, -0.8, 0.8, 0.8 }
+x_dir = { [0] = 0, -1, 1, 0, 0, -0.75, 0.75, 0.75, -0.75 }
+y_dir = { [0] = 0, 0, 0, -1, 1, -0.75, -0.75, 0.75, 0.75 }
 
 function get_dir_from_input()
     local msk = btn() & 0xf
@@ -513,7 +512,7 @@ function make_blaster_bullet(x, y)
     b.x = x
     b.y = y
     b.dx = 0
-    b.dy = -6
+    b.dy = -10
     b.sprite = 11
     b.hitbox = {
         x0 = 2,
@@ -552,11 +551,15 @@ function update_bullet(b)
     end
 end
 
-function draw_bullet(b)
+function draw_enemy_bullet(b)
     local frames = { 12, 13}
     local ticks_per_frame = 6
     local i = flr(t / ticks_per_frame % #frames) + 1
     spr(frames[i], b.x, b.y)
+end
+
+function draw_blaster_bullet(b)
+    spr(b.sprite, b.x, b.y)
 end
 
 function make_missile(x, y)
@@ -758,6 +761,24 @@ events = {
         fn = function()
             spawn_intercepter_wave("top")
         end
+    },
+    {
+        time = 180,
+        fn = function()
+            spawn_intercepter_wave("top")
+        end
+    },
+    {
+        time = 300,
+        fn = function()
+            spawn_intercepter_wave("top")
+        end
+    },
+    {
+        time = 420,
+        fn = function()
+            spawn_intercepter_wave("top")
+        end
     }
 }
 
@@ -783,12 +804,12 @@ end
 
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
-00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000097790000022000000220000000000000000000
-007007000200028082000028082000200880880000002000000080000000000000009000000080000006700000977900002ee200002882000000000000000000
-000770000207c2808207c0280827c020088888000000000000000000000000000000000000000000006007000097790002e87e20028e78200000000000000000
-0007700002282280828888280822822000808000000000000000000000000000000000000000000000000000009aa90002e88e20028ee8200000000000000000
-0070070002022880880220880882202000000000000000000000000000000000000000000000000000000000009aa900002ee200002882000000000000000000
-0000000002000800080000800080002000000000000000000000000000000000000000000000000000000000009aa90000022000000220000000000000000000
+00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000097790000077000000770000000000000000000
+00700700020002808200002808200020088088000000200000008000000000000000900000008000000670000097790000788700007ee7000000000000000000
+000770000207c2808207c0280827c0200888880000000000000000000000000000000000000000000060070000977900078ee87007e88e700000000000000000
+0007700002282280828888280822822000808000000000000000000000000000000000000000000000000000009aa900078ee87007e88e700000000000000000
+0070070002022880880220880882202000000000000000000000000000000000000000000000000000000000009aa90000788700007ee7000000000000000000
+0000000002000800080000800080002000000000000000000000000000000000000000000000000000000000009aa90000077000000770000000000000000000
 0000000005000d000d0000d000d00050000000000000000000000000000000000000000000000000000000000009900000000000000000000000000000000000
 0000000003000b000b0000b000b00030000000000000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000003000b000b0000b000b0003000b0b0000000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000
