@@ -38,17 +38,14 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
+    add_events_to_schedule()
 end
 
 function update_sandbox()
-    if btnp(4) then
-        schedule_index = 1
-        t = 0
-    end
-    update_wave_spawner()
-    update_ship()
+    update_schedule()
     foreach(enemies, update_enemy)
     foreach(enemy_bullets, update_bullet)
+    update_ship()
 end
 
 function draw_sandbox()
@@ -180,7 +177,7 @@ function add_intercepter(x, y, brain)
     e.hp = 4
     e.score = 10
     e.sprite = 65
-    e.drift_params = slow_drift
+    e.drift_params = create_slow_drift()
     e.hitbox = {
         x0 = 2,
         y0 = 1,
@@ -195,9 +192,7 @@ function add_intercepter(x, y, brain)
 end
 
 function update_enemy(e)
-    if e.x < -16 or
-       e.x > 142 or
-       e.y > 142 then
+    if e.y > 140 then
         del(enemies, e)
         return
     end
@@ -252,10 +247,13 @@ function drift(e)
     e.y += d.ay * sin(t / d.ty + d.py)
 end
 
-slow_drift = {
-        ax = 0.2, tx = 90, px = 0,
-        ay = 0.05, ty = 60, py = 0
-}
+function create_slow_drift()
+    p = {
+        ax = 0.1, tx = 90, px = rnd(),
+        ay = 0.05, ty = 60, py = rnd()
+    }
+    return p
+end
 -->8
 --ship
 ship = {}
@@ -744,23 +742,42 @@ function target(enemy, speed)
     make_enemy_bullet(enemy.x, enemy.y, dx, dy)
 end
 -->8
---waves
-schedule = {
-    {00, 10, -10, attack_pattern_1},
-    {10, 25, -10, attack_pattern_1},
-    {20, 40, -10, attack_pattern_1},
-    {80, 110, -10, attack_pattern_1},
-    {90, 95, -10, attack_pattern_1},
-    {100, 80, -10, attack_pattern_1}
-}
-schedule_index = 1
+--spawner
 
-function update_wave_spawner()
-    local spawn_event = schedule[schedule_index]
-    while spawn_event and t >= spawn_event[1] do
-        add_intercepter(spawn_event[2], spawn_event[3], spawn_event[4])
-        schedule_index += 1
-        spawn_event = schedule[schedule_index]
+function spawn_intercepter_wave(dir)
+    if dir == "top" then
+        add_intercepter(44, -20, slow_advance_and_shoot)
+        add_intercepter(64, -10, slow_advance_and_shoot)
+        add_intercepter(84, -20, slow_advance_and_shoot)
+    end
+end
+
+events = {
+    {
+        time = 60,
+        fn = function()
+            spawn_intercepter_wave("top")
+        end
+    }
+}
+
+schedule = {}
+
+function add_events_to_schedule()
+    for e in all(events) do
+        if not schedule[e.time] then
+            schedule[e.time] = {}
+        end
+        add(schedule[e.time], e.fn)
+    end
+end
+
+function update_schedule()
+    if schedule[t] then
+        print(schedule[t])
+        for f in all(schedule[t]) do
+            f()
+        end
     end
 end
 
