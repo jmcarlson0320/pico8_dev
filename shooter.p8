@@ -4,7 +4,6 @@ __lua__
 
 -- main
 -- todo
--- add weapon timers to ship code
 -- player ship explosion
 -- enemy types
 -- - bigger enemies
@@ -38,17 +37,25 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
+    add_events_to_schedule()
 end
 
 function update_sandbox()
+    update_schedule()
     update_ship()
+    foreach(enemies, update_enemy)
+    foreach(enemy_bullets, update_bullet)
     foreach(blaster_bullets, update_bullet)
 end
 
 function draw_sandbox()
     cls(0)
+
     draw_ship()
+    foreach(enemies, draw_enemy)
+    foreach(enemy_bullets, draw_enemy_bullet)
     foreach(blaster_bullets, draw_blaster_bullet)
+
     print("sandbox\n", 0, 0, 7)
     print("enemy count: " .. #enemies)
 end
@@ -173,9 +180,9 @@ function add_intercepter(x, y, brain)
     e.sprite = 65
     e.drift_params = create_slow_drift()
     e.hitbox = {
-        x0 = 2,
-        y0 = 1,
-        x1 = 5,
+        x0 = 1,
+        y0 = 0,
+        x1 = 6,
         y1 = 3
     }
     e.flash = 0
@@ -186,7 +193,9 @@ function add_intercepter(x, y, brain)
 end
 
 function update_enemy(e)
-    if e.y > 140 then
+    if e.y > 140 or
+       e.x < -50 or
+       e.x > 170 then
         del(enemies, e)
         return
     end
@@ -244,7 +253,7 @@ end
 function create_slow_drift()
     p = {
         ax = 0.1, tx = 90, px = rnd(),
-        ay = 0.05, ty = 60, py = rnd()
+        ay = 0.1, ty = 60, py = rnd()
     }
     return p
 end
@@ -332,7 +341,7 @@ function fire_blaster()
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
         sfx(2)
-        ship.blaster_timer = 4
+        ship.blaster_timer = 3
     end
 end
 
@@ -508,13 +517,13 @@ function make_blaster_bullet(x, y)
     b.x = x
     b.y = y
     b.dx = 0
-    b.dy = -10
+    b.dy = -12
     b.sprite = 11
     b.hitbox = {
         x0 = 2,
-        y0 = 1,
+        y0 = 0,
         x1 = 5,
-        y1 = 6
+        y1 = 10
     }
     add(blaster_bullets, b)
 end
@@ -648,8 +657,14 @@ stationary = {
     {"sto"}
 }
 
+fly_left = {
+    {"hea", 0.5, 1.5},
+    {"wai", 45},
+    {"tar", 2}
+}
+
 slow_advance = {
-    {"hea", 0.75, 0.3}
+    {"hea", 0.75, 0.3},
 }
 
 attack_pattern_1 = {
@@ -745,29 +760,26 @@ function spawn_intercepter_wave(dir, x_coor)
     end
 end
 
+function spawn_side_wave(dir, y_coor)
+    if dir == "right" then
+        add_intercepter(138, y_coor, fly_left)
+        add_intercepter(158, y_coor, fly_left)
+        add_intercepter(148, y_coor + 15, fly_left)
+        add_intercepter(168, y_coor + 15, fly_left)
+    end
+end
+
 events = {
     {
-        time = 30,
+        time = 1,
         fn = function()
-            spawn_intercepter_wave("top", 10)
+            spawn_side_wave("right", 15)
         end
     },
     {
-        time = 60,
+        time = 110,
         fn = function()
-            spawn_intercepter_wave("top", 100)
-        end
-    },
-    {
-        time = 90,
-        fn = function()
-            spawn_intercepter_wave("top", 20)
-        end
-    },
-    {
-        time = 120,
-        fn = function()
-            spawn_intercepter_wave("top", 90)
+            spawn_side_wave("right", 40)
         end
     }
 }
