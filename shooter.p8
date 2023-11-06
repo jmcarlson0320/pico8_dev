@@ -40,14 +40,12 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
-    add_events_to_schedule()
-    schedule_index = 1
+    add_all_events(events)
     t = 0
 end
 
 function update_sandbox()
     if btnp(4) then
-        schedule_index = 1
         t = 0
     end
     update_schedule()
@@ -104,7 +102,7 @@ function init_play()
     particles = {}
     missiles = {}
     enemies = {}
-    add_events_to_schedule()
+    add_all_events(events)
     ship = make_ship()
     ship.x = 60
     ship.dx = 0
@@ -129,7 +127,8 @@ function update_play()
     end
     if btnp(4) then
         t = 0
-        schedule_index = 1
+        schedule = {}
+        add_all_events(events)
     end
 end
 
@@ -668,6 +667,10 @@ fly_left = {
     {"hea", 0.5, 1.5}
 }
 
+fly_right = {
+    {"hea", 0.0, 1.5}
+}
+
 slow_advance = {
     {"hea", 0.75, 0.3},
 }
@@ -759,124 +762,33 @@ end
 -->8
 --spawner
 
-function spawn_intercepter_wave(dir, x_coor)
-    if dir == "top" then
-        add_intercepter(x_coor - 30, -20, slow_advance_and_shoot)
-        add_intercepter(x_coor, -10, slow_advance_and_shoot)
-        add_intercepter(x_coor + 30, -20, slow_advance_and_shoot)
-    end
-end
-
-function spawn_side_wave(dir, y_coor)
-    if dir == "right" then
-        add_intercepter(138, y_coor, fly_left)
-        add_intercepter(158, y_coor, combine(fly_left, random_shot(0, 80)))
-        add_intercepter(148, y_coor + 15, combine(fly_left, random_shot(0, 80)))
-        add_intercepter(168, y_coor + 15, fly_left)
-    end
-end
-
 events = {
-    {
-        time = 150,
-        fn = function()
-            spawn_side_wave("right", 15)
-        end
-    },
-    {
-        time = 360,
-        fn = function()
-            spawn_side_wave("right", 40)
-        end
-    },
     {
         time = 1,
         fn = function()
-            spawn_intercepter_wave("top", 64)
+            spawn_side_wave("left", 15)
         end
     },
     {
-        time = 120,
+        time = 60,
         fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 240,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 360,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 400,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 480,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 520,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 600,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 640,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 720,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 760,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 840,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
-        end
-    },
-    {
-        time = 880,
-        fn = function()
-            spawn_intercepter_wave("top", 64)
+            spawn_side_wave("right", 15)
         end
     }
 }
 
 schedule = {}
 
-function add_events_to_schedule()
+function add_event(time, fn)
+    if not schedule[time] then
+        schedule[time] = {}
+    end
+    add(schedule[time], fn)
+end
+
+function add_all_events(events)
     for e in all(events) do
-        if not schedule[e.time] then
-            schedule[e.time] = {}
-        end
-        add(schedule[e.time], e.fn)
+        add_event(e.time, e.fn)
     end
 end
 
@@ -886,6 +798,26 @@ function update_schedule()
         for f in all(schedule[t]) do
             f()
         end
+        deli(schedule, t)
+    end
+end
+-->8
+--waves
+function spawn_side_wave(dir, y_coor)
+    local new_brain = {}
+    local x_coor = 0
+    if dir == "right" then
+        new_brain = fly_left
+        x_coor = 138
+    elseif dir == "left" then
+        new_brain = fly_right
+        x_coor = -8
+    end
+    for i = 0, 2 do
+        local f = function() 
+            add_intercepter(x_coor, y_coor + i * 15, combine(new_brain, random_shot(0, 80)))
+        end
+        add_event(t + i * 15, f)
     end
 end
 -->8
