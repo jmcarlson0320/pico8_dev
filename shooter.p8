@@ -41,30 +41,21 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    ship=make_ship()
-    schedule_all_events(events)
-    t = 0
+    add_intercepter(64, 10, flyin_flyout)
 end
 
 function update_sandbox()
-    if btnp(4) then
-        t = 0
-    end
-    process_schedule()
-    update_ship()
     foreach(enemies, update_enemy)
-    foreach(enemy_bullets, update_bullet)
 end
 
 function draw_sandbox()
     cls(0)
 
-    draw_ship()
     foreach(enemies, draw_enemy)
-    foreach(enemy_bullets, draw_enemy_bullet)
 
     print("sandbox\n", 0, 0, 7)
     print("enemy count: " .. #enemies)
+    print(enemies[1].speed)
 end
 -->8
 -- title
@@ -181,8 +172,11 @@ function add_intercepter(x, y, brain)
     local e = {}
     e.x = x
     e.y = y
-    e.angle = 0
+    e.angle = 0.0
     e.speed = 0
+    e.max_speed = 0
+    e.decel = 0
+    e.accel = 0
     e.hp = 4
     e.score = 10
     e.sprite = 65
@@ -221,6 +215,8 @@ function update_enemy(e)
 end
 
 function move_enemy(e)
+    e.speed = max(0, e.speed - e.decel)
+    e.speed = min(e.max_speed, e.speed + e.accel)
     local dx = e.speed * cos(e.angle)
     local dy = e.speed * sin(e.angle)
     e.x += dx
@@ -661,6 +657,16 @@ function enemy_player_collisions()
 end
 -->8
 --brain
+flyin_flyout = {
+    {"hea", 0.75, 1},
+    {"wai", 30},
+    {"dec", 0.04},
+    {"wai", 60},
+    {"hea", 0.25, 0},
+    {"acc", 0.04, 1},
+    {"wai", 60}
+}
+
 stationary = {
     {"sto"}
 }
@@ -725,6 +731,10 @@ function process_brain(e)
     local inst = e.brain[e.brain_inst_pointer]
     if inst[1] == "hea" then
         heading(e, inst[2], inst[3])
+    elseif inst[1] == "dec" then
+        decel(e, inst[2])
+    elseif inst[1] == "acc" then
+        accel(e, inst[2], inst[3])
     elseif inst[1] == "sto" then
         stop(e)
     elseif inst[1] == "wai" then
@@ -738,13 +748,28 @@ function process_brain(e)
 end
 
 function heading(enemy, angle, speed)
+    enemy.accel = 0
+    enemy.decel = 0
     enemy.angle = angle
     enemy.speed = speed
+    enemy.max_speed = speed
+end
+
+function decel(enemy, val)
+    enemy.accel = 0
+    enemy.decel = val
+end
+
+function accel(enemy, val, max_speed)
+    enemy.decel = 0
+    enemy.accel = val
+    enemy.max_speed = max_speed
 end
 
 function stop(enemy)
     enemy.angle = 0.0
     enemy.speed = 0.0
+    enemy.max_speed = 0.0
 end
 
 function wait(enemy, frames)
