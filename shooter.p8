@@ -664,11 +664,15 @@ stationary = {
 }
 
 fly_left = {
-    {"hea", 0.5, 1.5}
+    {"hea", 0.5, 1.5},
+    {"wai", 10},
+    {"tar", 3}
 }
 
 fly_right = {
-    {"hea", 0.0, 1.5}
+    {"hea", 0.0, 1.5},
+    {"wai", 10},
+    {"tar", 3}
 }
 
 slow_advance = {
@@ -804,23 +808,23 @@ end
 -->8
 --waves
 function spawn_side_wave(dir, y_coor)
-    local new_brain = {}
-    local x_coor = 0
-    if dir == "right" then
-        new_brain = fly_left
-        x_coor = 138
-    elseif dir == "left" then
-        new_brain = fly_right
-        x_coor = -8
+    local x = 0
+    local brain = {}
+    if dir == "left" then
+        x = -8
+        brain = fly_right
+    elseif dir == "right" then
+        x = 136
+        brain = fly_left
     end
-    new_brain = combine(new_brain, random_shot(0, 80))
-    for i = 0, 3 do
-        local f = function() 
-            add_intercepter(x_coor, y_coor + i * 15, new_brain)
+    for i = 1, 4 do
+        local f = function()
+            add_intercepter(x, y_coor + (i - 1) * 15, brain)
         end
-        schedule_event(t + i * 15, f)
+        schedule_event(t + (i - 1) * 15, f)
     end
 end
+
 -->8
 --utils
 function rnd_range(min, max)
