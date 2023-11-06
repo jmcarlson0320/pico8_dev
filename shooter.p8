@@ -40,7 +40,7 @@ function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
     ship=make_ship()
-    add_all_events(events)
+    schedule_all_events(events)
     t = 0
 end
 
@@ -48,7 +48,7 @@ function update_sandbox()
     if btnp(4) then
         t = 0
     end
-    update_schedule()
+    process_schedule()
     update_ship()
     foreach(enemies, update_enemy)
     foreach(enemy_bullets, update_bullet)
@@ -102,7 +102,7 @@ function init_play()
     particles = {}
     missiles = {}
     enemies = {}
-    add_all_events(events)
+    schedule_all_events(events)
     ship = make_ship()
     ship.x = 60
     ship.dx = 0
@@ -112,7 +112,7 @@ end
 
 function update_play()
     update_ship()
-    update_schedule()
+    process_schedule()
     foreach(enemies, update_enemy)
     foreach(missiles, update_missile)
     foreach(blaster_bullets, update_bullet)
@@ -128,7 +128,7 @@ function update_play()
     if btnp(4) then
         t = 0
         schedule = {}
-        add_all_events(events)
+        schedule_all_events(events)
     end
 end
 
@@ -779,20 +779,20 @@ events = {
 
 schedule = {}
 
-function add_event(time, fn)
+function schedule_event(time, fn)
     if not schedule[time] then
         schedule[time] = {}
     end
     add(schedule[time], fn)
 end
 
-function add_all_events(events)
+function schedule_all_events(events)
     for e in all(events) do
-        add_event(e.time, e.fn)
+        schedule_event(e.time, e.fn)
     end
 end
 
-function update_schedule()
+function process_schedule()
     if schedule[t] then
         print(schedule[t])
         for f in all(schedule[t]) do
@@ -813,11 +813,12 @@ function spawn_side_wave(dir, y_coor)
         new_brain = fly_right
         x_coor = -8
     end
-    for i = 0, 2 do
+    new_brain = combine(new_brain, random_shot(0, 80))
+    for i = 0, 3 do
         local f = function() 
-            add_intercepter(x_coor, y_coor + i * 15, combine(new_brain, random_shot(0, 80)))
+            add_intercepter(x_coor, y_coor + i * 15, new_brain)
         end
-        add_event(t + i * 15, f)
+        schedule_event(t + i * 15, f)
     end
 end
 -->8
