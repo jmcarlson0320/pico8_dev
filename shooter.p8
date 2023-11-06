@@ -4,8 +4,10 @@ __lua__
 
 -- main
 -- todo
+-- brain behaviors
 -- rotate enemy sprite based on dir
--- bigger enemy sprites
+-- all enemy sprites should be bigger
+-- wave system
 -- waves
 -- player ship explosion
 -- enemy types
