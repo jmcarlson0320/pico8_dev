@@ -660,12 +660,24 @@ end
 --brain
 flyin_flyout = {
     {"hea", 0.75, 1},
-    {"wai", 30},
+    {"wai", 10},
+    {"tar", 3},
+    {"wai", 2},
+    {"tar", 3},
+    {"wai", 2},
+    {"tar", 3},
+    {"wai", 16},
     {"dec", 0.04},
-    {"wai", 60},
+    {"wai", 30},
     {"hea", 0.25, 0},
     {"acc", 0.04, 1},
-    {"wai", 60}
+    {"tar", 3},
+    {"wai", 8},
+    {"tar", 3},
+    {"wai", 8},
+    {"tar", 3},
+    {"wai", 8},
+    {"tar", 3},
 }
 
 stationary = {
@@ -716,33 +728,25 @@ slow_advance_and_shoot = {
     {"hea", 0.75, 1.5}
 }
 
-function random_shot(min_t, max_t)
-    local wait_time = rnd_range(0, 60)
-    local random_shot = {
-        {"wai", wait_time},
-        {"tar", 2}
-    }
-    return random_shot
-end
-
 function process_brain(e)
     if e.brain_inst_pointer > #e.brain then
         return
     end
     local inst = e.brain[e.brain_inst_pointer]
-    if inst[1] == "hea" then
+    local opcode = inst[1]
+    if opcode == "hea" then
         heading(e, inst[2], inst[3])
-    elseif inst[1] == "dec" then
+    elseif opcode == "dec" then
         decel(e, inst[2])
-    elseif inst[1] == "acc" then
+    elseif opcode == "acc" then
         accel(e, inst[2], inst[3])
-    elseif inst[1] == "sto" then
+    elseif opcode == "sto" then
         stop(e)
-    elseif inst[1] == "wai" then
+    elseif opcode == "wai" then
         wait(e, inst[2])
-    elseif inst[1] == "fir" then
+    elseif opcode == "fir" then
         fire(e, e.x, e.y, inst[2], inst[3])
-    elseif inst[1] == "tar" then
+    elseif opcode == "tar" then
         target(e, inst[2])
     end
     e.brain_inst_pointer += 1
@@ -806,7 +810,25 @@ events = {
         fn = function()
             spawn_side_wave("right", 15)
         end
-    }
+    },
+    {
+        time = 120,
+        fn = function()
+            spawn_triplet(64)
+        end
+    },
+    {
+        time = 180,
+        fn = function()
+            spawn_triplet(15)
+        end
+    },
+    {
+        time = 240,
+        fn = function()
+            spawn_triplet(100)
+        end
+    },
 }
 
 schedule = {}
@@ -818,8 +840,8 @@ function schedule_event(time, fn)
     add(schedule[time], fn)
 end
 
-function schedule_all_events(events)
-    for e in all(events) do
+function schedule_all_events(event_list)
+    for e in all(event_list) do
         schedule_event(e.time, e.fn)
     end
 end
@@ -838,6 +860,7 @@ end
 function spawn_side_wave(dir, y_coor)
     local x = 0
     local brain = {}
+
     if dir == "left" then
         x = -8
         brain = fly_right
@@ -845,12 +868,19 @@ function spawn_side_wave(dir, y_coor)
         x = 136
         brain = fly_left
     end
+
     for i = 1, 4 do
         local f = function()
             add_intercepter(x, y_coor + (i - 1) * 15, brain)
         end
         schedule_event(t + (i - 1) * 15, f)
     end
+end
+
+function spawn_triplet(x)
+    add_intercepter(x + 10, -8, flyin_flyout)
+    add_intercepter(x - 10, -8, flyin_flyout)
+    add_intercepter(x, -18, flyin_flyout)
 end
 
 -->8
