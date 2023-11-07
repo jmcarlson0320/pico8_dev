@@ -56,6 +56,7 @@ function draw_sandbox()
     print("sandbox\n", 0, 0, 7)
     print("enemy count: " .. #enemies)
     print(enemies[1].speed)
+    print("schedule size: " .. #schedule)
 end
 -->8
 -- title
@@ -365,8 +366,8 @@ function reset_ship()
 end
 
 dir_code = { [0] = 0, 1, 2, 0, 3, 5, 6, 3, 4, 8, 7, 4, 0, 1, 2, 0 }
-x_dir = { [0] = 0, -1, 1, 0, 0, -0.75, 0.75, 0.75, -0.75 }
-y_dir = { [0] = 0, 0, 0, -1, 1, -0.75, -0.75, 0.75, 0.75 }
+x_dir = { [0] = 0, -1, 1, 0, 0, -0.707, 0.707, 0.707, -0.707 }
+y_dir = { [0] = 0, 0, 0, -1, 1, -0.707, -0.707, 0.707, 0.707 }
 
 function get_dir_from_input()
     local msk = btn() & 0xf
