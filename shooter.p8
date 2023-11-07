@@ -826,7 +826,7 @@ events = {
     {
         time = 240,
         fn = function()
-            spawn_triplet(100)
+            spawn_triplet(108)
         end
     },
 }
