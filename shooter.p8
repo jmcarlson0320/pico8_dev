@@ -789,13 +789,13 @@ events = {
     {
         time = 1,
         fn = function()
-            spawn_side_wave("left", 15)
+            spawn_wave_left(15)
         end
     },
     {
         time = 60,
         fn = function()
-            spawn_side_wave("right", 15)
+            spawn_wave_right(15)
         end
     },
     {
@@ -843,30 +843,28 @@ function process_schedule()
 end
 -->8
 --waves
-function spawn_side_wave(dir, y_coor)
-    local x = 0
-    local brain = {}
-
-    if dir == "left" then
-        x = -8
-        brain = fly_right
-    elseif dir == "right" then
-        x = 136
-        brain = fly_left
-    end
-
+function spawn_wave_left(y_coor)
     for i = 1, 4 do
         local f = function()
-            add_intercepter(x, y_coor + (i - 1) * 15, brain)
+            add_intercepter(-8, y_coor + (i - 1) * 15, fly_right)
         end
         schedule_event(t + (i - 1) * 15, f)
     end
 end
 
-function spawn_triplet(x)
-    add_intercepter(x + 10, -8, flyin_flyout)
-    add_intercepter(x - 10, -8, flyin_flyout)
-    add_intercepter(x, -18, flyin_flyout)
+function spawn_wave_right(y_coor)
+    for i = 1, 4 do
+        local f = function()
+            add_intercepter(136, y_coor + (i - 1) * 15, fly_left)
+        end
+        schedule_event(t + (i - 1) * 15, f)
+    end
+end
+
+function spawn_triplet(x_coor)
+    add_intercepter(x_coor + 10, -8, flyin_flyout)
+    add_intercepter(x_coor - 10, -8, flyin_flyout)
+    add_intercepter(x_coor, -18, flyin_flyout)
 end
 
 -->8
