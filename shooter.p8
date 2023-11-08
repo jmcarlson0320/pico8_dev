@@ -4,20 +4,15 @@ __lua__
 
 -- main
 -- todo
--- brain behaviors
--- rotate enemy sprite based on dir
 -- all enemy sprites should be bigger
--- wave system
--- waves
--- player ship explosion
--- enemy types
--- - bigger enemies
+-- rotate enemy sprite based on dir
 -- general animation component/system
--- animations should use local t
+-- more enemy types
+-- player ship explosion
 -- power ups
 -- weapon component
--- missles fire seperately
 -- other weapons
+-- missles fire seperately
 
 function debug(x)
     print(x)
