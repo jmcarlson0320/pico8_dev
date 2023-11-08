@@ -14,10 +14,6 @@ __lua__
 -- other weapons
 -- missles fire seperately
 
-function debug(x)
-    print(x)
-end
-
 function _init()
     t = 0
     init_title()
@@ -45,13 +41,8 @@ end
 
 function draw_sandbox()
     cls(0)
-
     foreach(enemies, draw_enemy)
-
     print("sandbox\n", 0, 0, 7)
-    print("enemy count: " .. #enemies)
-    print(enemies[1].speed)
-    print("schedule size: " .. #schedule)
 end
 -->8
 -- title
@@ -62,11 +53,11 @@ function init_title()
 end
 
 function update_title()
+    foreach(stars, update_star)
+    foreach(particles, update_particle)
     if btnp(4) or btnp(5) then
         init_play()
     end
-    foreach(stars, update_star)
-    foreach(particles, update_particle)
 end
 
 function draw_title()
@@ -91,8 +82,9 @@ function init_play()
     particles = {}
     missiles = {}
     enemies = {}
+    schedule = {}
     schedule_all_events(events)
-    ship = make_ship()
+    init_ship()
     ship.x = 60
     ship.dx = 0
     ship.dir = "straight"
@@ -115,9 +107,7 @@ function update_play()
         init_gameover()
     end
     if btnp(4) then
-        t = 0
-        schedule = {}
-        schedule_all_events(events)
+        init_play()
     end
 end
 
@@ -148,10 +138,10 @@ function init_gameover()
 end
 
 function update_gameover()
+    foreach(stars, update_star)
     if btnp(4) or btnp(5) then
         init_title()
     end
-    foreach(stars, update_star)
 end
 
 function draw_gameover()
@@ -261,14 +251,13 @@ end
 --ship
 ship = {}
 
-function make_ship()
-    local s = {}
-    s.x = 60
-    s.y = 112
-    s.dir = 0
-    s.lastdir = 0
-    s.spd = 2.5
-    s.sprites = {
+function init_ship()
+    ship.x = 60
+    ship.y = 112
+    ship.dir = 0
+    ship.lastdir = 0
+    ship.spd = 2.5
+    ship.sprites = {
         [1] = 33,
         [5] = 33,
         [8] = 33,
@@ -279,17 +268,16 @@ function make_ship()
         [6] = 35,
         [7] = 35
     }
-    s.hitbox = {
+    ship.hitbox = {
         x0 = 2,
         y0 = 2,
         x1 = 5,
         y1 = 6
     }
-    s.invul = 0
-    s.draw = true
-    s.blaster_timer = 0
-    s.missile_timer = 0
-    return s
+    ship.invul = 0
+    ship.draw = true
+    ship.blaster_timer = 0
+    ship.missile_timer = 0
 end
 
 function update_ship()
@@ -728,23 +716,27 @@ function process_brain(e)
         return
     end
     local inst = e.brain[e.brain_inst_pointer]
+    execute_inst(e, inst)
+    e.brain_inst_pointer += 1
+end
+
+function execute_inst(enemy, inst)
     local opcode = inst[1]
     if opcode == "hea" then
-        heading(e, inst[2], inst[3])
+        heading(enemy, inst[2], inst[3])
     elseif opcode == "dec" then
-        decel(e, inst[2])
+        decel(enemy, inst[2])
     elseif opcode == "acc" then
-        accel(e, inst[2], inst[3])
+        accel(enemy, inst[2], inst[3])
     elseif opcode == "sto" then
-        stop(e)
+        stop(enemy)
     elseif opcode == "wai" then
-        wait(e, inst[2])
+        wait(enemy, inst[2])
     elseif opcode == "fir" then
-        fire(e, e.x, e.y, inst[2], inst[3])
+        fire(enemy, enemy.x, enemy.y, inst[2], inst[3])
     elseif opcode == "tar" then
-        target(e, inst[2])
+        target(enemy, inst[2])
     end
-    e.brain_inst_pointer += 1
 end
 
 function heading(enemy, angle, speed)
@@ -843,7 +835,6 @@ end
 
 function process_schedule()
     if schedule[t] then
-        print(schedule[t])
         for f in all(schedule[t]) do
             f()
         end
