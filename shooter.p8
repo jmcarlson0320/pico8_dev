@@ -33,7 +33,7 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_intercepter(64, 64, stationary)
+    add_intercepter(64, -10, test_brain)
 end
 
 function update_sandbox()
@@ -243,12 +243,6 @@ function update_bullet_sprayer(e)
     elseif s.shot_timer > 0 then
         s.shot_timer -= 1
     end
-end
-
-function spray_bullets(e, num_bullets)
-    local s = e.bullet_sprayer
-    s.magazine = num_bullets
-    s.shot_timer = 0
 end
 
 function explode_enemy(e)
@@ -690,8 +684,13 @@ end
 -->8
 --brain
 test_brain = {
-    {"sto"},
-    {"fir", 0.75, 3},
+    {"hea", 0.75, 0.5},
+    {"spb", 10},
+    {"wai", 90},
+    {"spb", 10},
+    {"wai", 90},
+    {"spb", 10},
+    {"wai", 90}
 }
 
 flyin_flyout = {
@@ -789,6 +788,8 @@ function execute_inst(enemy, inst)
         fire(enemy, enemy.x, enemy.y, inst[2], inst[3])
     elseif opcode == "tar" then
         target(enemy, inst[2], inst[3])
+    elseif opcode == "spb" then
+        spray_bullets(enemy, inst[2])
     end
 end
 
@@ -839,6 +840,13 @@ function target(enemy, speed, bullet_type)
         make_enemy_bullet(enemy.x, enemy.y, dx, dy, green_orb)
     end
 end
+
+function spray_bullets(e, num_bullets)
+    local s = e.bullet_sprayer
+    s.magazine = num_bullets
+    s.shot_timer = 0
+end
+
 -->8
 --spawner
 
