@@ -17,7 +17,7 @@ __lua__
 
 function _init()
     t=0
-    init_title()
+    init_sandbox()
 end
 
 function _update()
@@ -31,20 +31,26 @@ end
 -->8
 -- sandbox
 function init_sandbox()
-    _upd=update_sandbox
-    _drw=draw_sandbox
-    make_enemy_bullet(64, 64, 0, 0, slow_orb)
+    _upd = update_sandbox
+    _drw = draw_sandbox
+    add_intercepter(64, 64, stationary)
 end
 
 function update_sandbox()
+    if btnp(4) then
+        spray_bullets(enemies[1], 20)
+    end
+    foreach(enemies, update_enemy)
     foreach(enemy_bullets, update_bullet)
 end
 
 function draw_sandbox()
-    cls(0)	
+    cls(0)
+    foreach(enemies, draw_enemy)
     foreach(enemy_bullets,draw_enemy_bullet)
-    print("sandbox\n",0,0,7)
+    print("sandbox\n", 0, 0, 7)
 end
+
 -->8
 -- title
 function init_title()
@@ -170,6 +176,11 @@ function add_intercepter(x, y, brain)
     e.brain = brain
     e.brain_inst_pointer = 1
     e.wait_timer = 0
+    e.bullet_sprayer = {
+        seed = 0.8,
+        magazine = 0,
+        shot_timer = 0
+    }
     add(enemies, e)
 end
 
@@ -190,6 +201,7 @@ function update_enemy(e)
         del(enemies, e)
         return
     end
+    update_bullet_sprayer(e)
 end
 
 function move_enemy(e)
@@ -217,6 +229,26 @@ function draw_enemy(e)
     end
     spr(e.sprite, e.x, e.y)
     pal()
+end
+
+function update_bullet_sprayer(e)
+    local s = e.bullet_sprayer
+    if (s.shot_timer == 0) and (s.magazine > 0) then
+        s.seed += 0.001
+        local dx = 1.5*cos(s.seed*t)
+        local dy = 1.5*sin(s.seed*t)
+        make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
+        s.magazine -= 1
+        s.shot_timer = 3
+    elseif s.shot_timer > 0 then
+        s.shot_timer -= 1
+    end
+end
+
+function spray_bullets(e, num_bullets)
+    local s = e.bullet_sprayer
+    s.magazine = num_bullets
+    s.shot_timer = 0
 end
 
 function explode_enemy(e)
