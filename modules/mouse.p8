@@ -9,19 +9,14 @@ function _draw()
  cls()
  local x,y=mouse.pos()
  local b=mouse.button()
+ spr(0,x-1,y-1)
  print("x:"..x)
 	print("y:"..y)
- print("button:"..mouse[b])
- spr(0,x-1,y-1)
+ print("button:"..b)
 end
 -->8
 --mouse
 mouse={}
-
-mouse[0]="none"
-mouse[1]="left"
-mouse[2]="right"
-mouse[4]="middle"
 
 function mouse.init()
  poke(0x5f2d,1)

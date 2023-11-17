@@ -17,7 +17,7 @@ __lua__
 
 function _init()
     t=0
-    init_sandbox()
+    init_title()
 end
 
 function _update()
@@ -33,30 +33,25 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_intercepter(64, -10, test_brain)
+    make_enemy_bullet(64, 64, 0, 0, blue_orb)
 end
 
 function update_sandbox()
-    if btnp(4) then
-        spray_bullets(enemies[1], 20)
-    end
-    foreach(enemies, update_enemy)
-    foreach(enemy_bullets, update_bullet)
+    update_bullet(enemy_bullets[1])
 end
 
 function draw_sandbox()
     cls(0)
-    foreach(enemies, draw_enemy)
-    foreach(enemy_bullets,draw_enemy_bullet)
+    draw_enemy_bullet(enemy_bullets[1])
     print("sandbox\n", 0, 0, 7)
 end
 
 -->8
 -- title
 function init_title()
-    _upd=update_title
-    _drw=draw_title
-    stars=make_starfield(40)
+    _upd = update_title
+    _drw = draw_title
+    stars = make_starfield(40)
 end
 
 function update_title()
@@ -75,17 +70,17 @@ end
 -->8
 -- play
 function init_play()
-    _upd=update_play
-    _drw=draw_play
-    t=0
-    lives=3
-    score=10000
-    particles={}
-    missiles={}
-    enemies={}
-    blaster_bullets={}
-    enemy_bullets={}
-    schedule={}
+    _upd = update_play
+    _drw = draw_play
+    t = 0
+    lives = 3
+    score = 10000
+    particles = {}
+    missiles = {}
+    enemies = {}
+    blaster_bullets = {}
+    enemy_bullets = {}
+    schedule = {}
     schedule_all_events(events)
     init_ship()
 end
@@ -177,7 +172,7 @@ function add_intercepter(x, y, brain)
     e.brain_inst_pointer = 1
     e.wait_timer = 0
     e.bullet_sprayer = {
-        seed = 0.8,
+        angle = 0.8,
         magazine = 0,
         shot_timer = 0
     }
@@ -234,9 +229,9 @@ end
 function update_bullet_sprayer(e)
     local s = e.bullet_sprayer
     if (s.shot_timer == 0) and (s.magazine > 0) then
-        s.seed += 0.001
-        local dx = 1.5*cos(s.seed*t)
-        local dy = 1.5*sin(s.seed*t)
+        s.angle += 0.05
+        local dx = 1.5*cos(s.angle)
+        local dy = 1.5*sin(s.angle)
         make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
         s.magazine -= 1
         s.shot_timer = 3
@@ -330,18 +325,20 @@ function draw_ship()
 end
 
 function draw_ship_flames()
-    local frames = { 6, 7, 8, 9 }
-    local ticks_per_frame = 3
-    local i = flr(t / ticks_per_frame % #frames) + 1
-    local left_offset = 0
-    local right_offset = 0
+    local ship_flames = {
+        frames = { 6, 7, 8, 9 },
+        rate = 3
+    }
     if ship.sprites[ship.dir] == 35 then
-        left_offset = 1
+        draw_animation(ship_flames, ship.x - 2, ship.y + 8)
+        draw_animation(ship_flames, ship.x + 2, ship.y + 8)
     elseif ship.sprites[ship.dir] == 33 then
-        right_offset = -1
+        draw_animation(ship_flames, ship.x - 3, ship.y + 8)
+        draw_animation(ship_flames, ship.x + 1, ship.y + 8)
+    else
+        draw_animation(ship_flames, ship.x - 3, ship.y + 8)
+        draw_animation(ship_flames, ship.x + 2, ship.y + 8)
     end
-    spr(frames[i], ship.x - 3 + left_offset, ship.y + 8)
-    spr(frames[i], ship.x + 2 + right_offset, ship.y + 8)
 end
 
 function fire_blaster()
@@ -519,7 +516,10 @@ end
 -->8
 --weapons
 green_orb = {
-    sprite = {28, 29},
+    animation = {
+        frames = { 28, 29 },
+        rate = 5
+    },
     hitbox = {
         x0 = 3,
         y0 = 3,
@@ -529,7 +529,10 @@ green_orb = {
 }
 
 blue_orb = {
-    sprite = {12, 13},
+    animation = {
+        frames = { 12, 13 },
+        rate = 3
+    },
     hitbox = {
         x0 = 4,
         y0 = 4,
@@ -569,8 +572,8 @@ function make_enemy_bullet(x, y, dx, dy, bullet_type)
     b.y = y
     b.dx = dx
     b.dy = dy
-    b.sprite = bullet_type.sprite
     b.hitbox = bullet_type.hitbox
+    b.animation = bullet_type.animation
     add(enemy_bullets, b)
 end
 
@@ -587,10 +590,8 @@ function update_bullet(b)
 end
 
 function draw_enemy_bullet(b)
-    local frames = b.sprite
-    local ticks_per_frame = 3
-    local i = flr(t / ticks_per_frame % #frames) + 1
-    spr(frames[i], b.x, b.y)
+    local a = b.animation
+    draw_animation(a, b.x, b.y)
 end
 
 function draw_blaster_bullet(b)
@@ -704,15 +705,16 @@ flyin_flyout = {
     {"wai", 16},
     {"dec", 0.04},
     {"wai", 30},
+    {"spb", 10},
     {"hea", 0.25, 0},
     {"acc", 0.04, 1},
-    {"tar", 2, "green"},
+    {"tar", 4, "blue"},
     {"wai", 8},
-    {"tar", 2, "green"},
+    {"tar", 4, "blue"},
     {"wai", 8},
-    {"tar", 2, "green"},
+    {"tar", 4, "blue"},
     {"wai", 8},
-    {"tar", 2, "green"}
+    {"tar", 4, "blue"}
 }
 
 stationary = {
@@ -789,7 +791,7 @@ function execute_inst(enemy, inst)
     elseif opcode == "tar" then
         target(enemy, inst[2], inst[3])
     elseif opcode == "spb" then
-        spray_bullets(enemy, inst[2])
+        fire_pattern(enemy)
     end
 end
 
@@ -843,8 +845,19 @@ end
 
 function spray_bullets(e, num_bullets)
     local s = e.bullet_sprayer
+    s.angle = 0.6
     s.magazine = num_bullets
     s.shot_timer = 0
+end
+
+function fire_pattern(e)
+    local angle = 0.6
+    for i = 0, 4 do
+        angle += 0.05
+        local dx = 1.5 * cos(angle)
+        local dy = 1.5 * sin(angle)
+        make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
+    end
 end
 
 -->8
@@ -947,6 +960,13 @@ function combine(t1, t2)
         add(new, e)
     end
     return new
+end
+
+function draw_animation(animation, x, y)
+    local frames = animation.frames
+    local rate = animation.rate
+    local i = flr(t / rate % #frames) + 1
+    spr(frames[i], x, y)
 end
 
 __gfx__
