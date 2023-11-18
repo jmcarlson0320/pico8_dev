@@ -4,10 +4,8 @@ __lua__
 
 -- main
 -- todo
--- brain inst for enemy shot types
 -- all enemy sprites should be bigger
 -- rotate enemy sprite based on dir
--- general animation component/system
 -- more enemy types
 -- player ship explosion
 -- power ups
@@ -81,7 +79,7 @@ function init_play()
     blaster_bullets = {}
     enemy_bullets = {}
     schedule = {}
-    schedule_all_events(events)
+    schedule_event_list(test_stage, 0)
     init_ship()
 end
 
@@ -114,7 +112,7 @@ function draw_play()
     foreach(particles,draw_particle)
     foreach(enemies,draw_enemy)
     draw_ui(4,4)
-    print(#particles)
+    print(#enemy_bullets)
 end
 
 function draw_ui(x,y)
@@ -572,8 +570,8 @@ function make_enemy_bullet(x, y, dx, dy, bullet_type)
     b.y = y
     b.dx = dx
     b.dy = dy
-    b.hitbox = bullet_type.hitbox
     b.animation = bullet_type.animation
+    b.hitbox = bullet_type.hitbox
     add(enemy_bullets, b)
 end
 
@@ -733,36 +731,18 @@ fly_right = {
     {"tar", 2, "green"}
 }
 
-slow_advance = {
-    {"hea", 0.75, 0.3},
-}
-
-attack_pattern_1 = {
-    {"hea", 0.75, 1},
-    {"wai", 30},
-    {"tar", 4},
-    {"wai", 1},
-    {"tar", 4},
-    {"wai", 1},
-    {"tar", 4},
-    {"wai", 1},
-    {"tar", 4},
-    {"wai", 30},
-    {"hea", 0.75, 2}
-}
-
 slow_advance_and_shoot = {
     {"hea", 0.75, 0.3},
     {"wai", 30},
-    {"tar", 2},
+    {"tar", 2, "green"},
     {"wai", 30},
-    {"tar", 2},
+    {"tar", 2, "green"},
     {"wai", 30},
-    {"tar", 2},
+    {"tar", 2, "green"},
     {"wai", 30},
-    {"tar", 2},
+    {"tar", 2, "green"},
     {"wai", 30},
-    {"hea", 0.75, 1.5}
+    {"acc", 0.04, 1.5}
 }
 
 function process_brain(e)
@@ -836,11 +816,13 @@ function target(enemy, speed, bullet_type)
     local angle = atan2(to_target_x, to_target_y)
     local dx = cos(angle) * speed
     local dy = sin(angle) * speed
+    local b
     if bullet_type == "blue" then
-        make_enemy_bullet(enemy.x, enemy.y, dx, dy, blue_orb)
+        b = blue_orb
     elseif bullet_type == "green" then
-        make_enemy_bullet(enemy.x, enemy.y, dx, dy, green_orb)
+        b = green_orb
     end
+    make_enemy_bullet(enemy.x, enemy.y, dx, dy, b)
 end
 
 function spray_bullets(e, num_bullets)
@@ -851,19 +833,67 @@ function spray_bullets(e, num_bullets)
 end
 
 function fire_pattern(e)
-    local angle = 0.6
-    for i = 0, 4 do
-        angle += 0.05
+    local angle = 0.55
+    for i = 1, 5 do
         local dx = 1.5 * cos(angle)
         local dy = 1.5 * sin(angle)
         make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
+        angle += 0.1
     end
 end
 
 -->8
 --spawner
+schedule = {}
 
-events = {
+function schedule_event(time, fn)
+    if not schedule[time] then
+        schedule[time] = {}
+    end
+    add(schedule[time], fn)
+end
+
+function schedule_event_list(event_list, start_time)
+    for e in all(event_list) do
+        schedule_event(start_time + e.time, e.fn)
+    end
+end
+
+function process_schedule()
+    if schedule[t] then
+        for f in all(schedule[t]) do
+            f()
+        end
+    end
+end
+-->8
+--waves
+function spawn_wave_left(y_coor)
+    for i = 1, 4 do
+        local f = function()
+            add_intercepter(-8, y_coor + (i - 1) * 15, fly_right)
+        end
+        schedule_event(t + (i - 1) * 15, f)
+    end
+end
+
+function spawn_wave_right(y_coor)
+    for i = 1, 4 do
+        local f = function()
+            add_intercepter(136, y_coor + (i - 1) * 15, fly_left)
+        end
+        schedule_event(t + (i - 1) * 15, f)
+    end
+end
+
+function spawn_triplet(x_coor)
+    add_intercepter(x_coor + 10, -8, slow_advance_and_shoot)
+    add_intercepter(x_coor - 10, -8, slow_advance_and_shoot)
+    add_intercepter(x_coor, -18, slow_advance_and_shoot)
+end
+-->8
+--stages
+test_stage = {
     {
         time = 1,
         fn = function()
@@ -891,77 +921,13 @@ events = {
     {
         time = 240,
         fn = function()
-            spawn_triplet(108)
+            spawn_triplet(104)
         end
     },
 }
 
-schedule = {}
-
-function schedule_event(time, fn)
-    if not schedule[time] then
-        schedule[time] = {}
-    end
-    add(schedule[time], fn)
-end
-
-function schedule_all_events(event_list)
-    for e in all(event_list) do
-        schedule_event(e.time, e.fn)
-    end
-end
-
-function process_schedule()
-    if schedule[t] then
-        for f in all(schedule[t]) do
-            f()
-        end
-        deli(schedule, t)
-    end
-end
--->8
---waves
-function spawn_wave_left(y_coor)
-    for i = 1, 4 do
-        local f = function()
-            add_intercepter(-8, y_coor + (i - 1) * 15, fly_right)
-        end
-        schedule_event(t + (i - 1) * 15, f)
-    end
-end
-
-function spawn_wave_right(y_coor)
-    for i = 1, 4 do
-        local f = function()
-            add_intercepter(136, y_coor + (i - 1) * 15, fly_left)
-        end
-        schedule_event(t + (i - 1) * 15, f)
-    end
-end
-
-function spawn_triplet(x_coor)
-    add_intercepter(x_coor + 10, -8, flyin_flyout)
-    add_intercepter(x_coor - 10, -8, flyin_flyout)
-    add_intercepter(x_coor, -18, flyin_flyout)
-end
-
 -->8
 --utils
-function rnd_range(min, max)
-    return rnd(max - min) + min
-end
-
-function combine(t1, t2)
-    local new = {}
-    for e in all(t1) do
-        add(new, e)
-    end
-    for e in all(t2) do
-        add(new, e)
-    end
-    return new
-end
-
 function draw_animation(animation, x, y)
     local frames = animation.frames
     local rate = animation.rate
