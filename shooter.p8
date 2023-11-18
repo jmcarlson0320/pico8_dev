@@ -15,7 +15,7 @@ __lua__
 
 function _init()
     t=0
-    init_title()
+    init_sandbox()
 end
 
 function _update()
@@ -31,16 +31,20 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    make_enemy_bullet(64, 64, 0, 0, blue_orb)
 end
 
 function update_sandbox()
-    update_bullet(enemy_bullets[1])
+    if #enemies == 0 then
+        add_intercepter(64, 0, test_brain)
+    end
+    foreach(enemies, update_enemy)
+    foreach(enemy_bullets, update_bullet)
 end
 
 function draw_sandbox()
     cls(0)
-    draw_enemy_bullet(enemy_bullets[1])
+    foreach(enemies, draw_enemy)
+    foreach(enemy_bullets, draw_enemy_bullet)
     print("sandbox\n", 0, 0, 7)
 end
 
@@ -157,7 +161,7 @@ function add_intercepter(x, y, brain)
     e.accel = 0
     e.hp = 16
     e.score = 10
-    e.sprite = 65
+    e.sprite = 81
     e.drift_params = create_slow_drift()
     e.hitbox = {
         x0 = 0,
@@ -170,7 +174,7 @@ function add_intercepter(x, y, brain)
     e.brain_inst_pointer = 1
     e.wait_timer = 0
     e.bullet_sprayer = {
-        angle = 0.8,
+        angle = 0.0,
         magazine = 0,
         shot_timer = 0
     }
@@ -226,15 +230,15 @@ end
 
 function update_bullet_sprayer(e)
     local s = e.bullet_sprayer
-    if (s.shot_timer == 0) and (s.magazine > 0) then
-        s.angle += 0.05
+    if s.shot_timer > 0 then
+        s.shot_timer -= 1
+    elseif (s.shot_timer == 0) and (s.magazine > 0) then
         local dx = 1.5*cos(s.angle)
         local dy = 1.5*sin(s.angle)
         make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
         s.magazine -= 1
         s.shot_timer = 3
-    elseif s.shot_timer > 0 then
-        s.shot_timer -= 1
+        s.angle += 0.05
     end
 end
 
@@ -887,9 +891,9 @@ function spawn_wave_right(y_coor)
 end
 
 function spawn_triplet(x_coor)
-    add_intercepter(x_coor + 10, -8, slow_advance_and_shoot)
-    add_intercepter(x_coor - 10, -8, slow_advance_and_shoot)
-    add_intercepter(x_coor, -18, slow_advance_and_shoot)
+    add_intercepter(x_coor + 10, -8, flyin_flyout)
+    add_intercepter(x_coor - 10, -8, flyin_flyout)
+    add_intercepter(x_coor, -18, flyin_flyout)
 end
 -->8
 --stages
@@ -986,7 +990,7 @@ __gfx__
 000000000000000000000000000000000000000000000000000000022000000000000000000aa0000009a000000aa0000009a000000000000000000000000000
 0000700007700770000700000000000000000000000000000bb3000000003bb00000000000000000000000000000000000000000000000000000000000000000
 000d7000077dd7700007d000000000000000000000000000b33500bbbb00533b0000000000000000000000000000000000000000000000000000000000000000
-000dd00007dddd70000dd0000000000000000000000000003355bbbbbbbb55330000000000000000000000000000000000000000000000000000000000000000
+000dd000077dd770000dd0000000000000000000000000003355bbbbbbbb55330000000000000000000000000000000000000000000000000000000000000000
 000c700000dddd000007c000000000000000000000000000355bbb3333bbb5530000000000000000000000000000000000000000000000000000000000000000
 0007700007dddd700007700000000000000000000000000035bb33555533bb530000000000000000000000000000000000000000000000000000000000000000
 00000000077cc7700000000000000000000000000000000035bb35bbbb53bb530000000000000000000000000000000000000000000000000000000000000000
