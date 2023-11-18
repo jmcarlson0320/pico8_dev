@@ -26,16 +26,19 @@ end
 function _draw()
     _drw()
 end
--->8
+
 -- sandbox
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
+    ship = {}
+    ship.x = 10
+    ship.y = 128
 end
 
 function update_sandbox()
     if #enemies == 0 then
-        add_intercepter(64, 0, test_brain)
+        spawn_triplet(64)
     end
     foreach(enemies, update_enemy)
     foreach(enemy_bullets, update_bullet)
@@ -48,7 +51,6 @@ function draw_sandbox()
     print("sandbox\n", 0, 0, 7)
 end
 
--->8
 -- title
 function init_title()
     _upd = update_title
@@ -69,7 +71,7 @@ function draw_title()
     print("title screen",50,50,7)
     print("press ❎ or 🅾️ to start", 30, 58, 7)
 end
--->8
+
 -- play
 function init_play()
     _upd = update_play
@@ -126,7 +128,7 @@ function draw_ui(x,y)
     end
     print(score,x+50,y,7)
 end
--->8
+
 -- gameover
 function init_gameover()
     _upd = update_gameover
@@ -146,7 +148,7 @@ function draw_gameover()
     print("gameover\n", 50, 50, 7)
     print("press ❎ or 🅾️ to continue", 20, 58, 7)
 end
--->8
+
 -- enemies
 enemies = {}
 
@@ -192,7 +194,8 @@ function update_enemy(e)
         process_brain(e)
     end
     move_enemy(e)
-    if e.y > 140 or
+    if e.y < -30 or
+       e.y > 140 or
        e.x < -50 or
        e.x > 170 then
         del(enemies, e)
@@ -262,7 +265,7 @@ function create_slow_drift()
     }
     return p
 end
--->8
+
 --ship
 ship = {}
 
@@ -378,7 +381,7 @@ function get_dir_from_input()
     local dir = dir_code[msk]
     return dir
 end
--->8
+
 --effects
 particles = {}
 star_colors = { 1, 5 }
@@ -515,7 +518,7 @@ function draw_star(s)
     local col = star_colors[s.layer]
     line(s.x, s.y, s.x, prev_y_pos, col)
 end
--->8
+
 --weapons
 green_orb = {
     animation = {
@@ -626,7 +629,6 @@ function draw_missile(m)
     spr(10, m.x, m.y)
 end
 
--->8
 --collision
 function draw_hitbox(o, col)
     local h = o.hitbox
@@ -684,97 +686,19 @@ function enemy_player_collisions()
         end
     end
 end
--->8
+
 --brain
-test_brain = {
-    {0, heading, {0.75, 0.5}},
-    {0, spray_bullets, {10}},
-    {90, spray_bullets, {10}},
-    {180, spray_bullets, {10}},
-}
-
-new_commands = {
-    {heading, {0.75, 1}},
-    {wait, {10}},
-}
-
-flyin_flyout = {
-    {"hea", 0.75, 1},
-    {"wai", 10},
-    {"tar", 4, "blue"},
-    {"wai", 2},
-    {"tar", 4, "blue"},
-    {"wai", 2},
-    {"tar", 4, "blue"},
-    {"wai", 16},
-    {"dec", 0.04},
-    {"wai", 30},
-    {"spb", 10},
-    {"hea", 0.25, 0},
-    {"acc", 0.04, 1},
-    {"tar", 4, "blue"},
-    {"wai", 8},
-    {"tar", 4, "blue"},
-    {"wai", 8},
-    {"tar", 4, "blue"},
-    {"wai", 8},
-    {"tar", 4, "blue"}
-}
-
-stationary = {
-    {"sto"}
-}
-
-fly_left = {
-    {"hea", 0.5, 1.5},
-    {"wai", 10},
-    {"tar", 2, "green"}
-}
-
-fly_right = {
-    {"hea", 0.0, 1.5},
-    {"wai", 10},
-    {"tar", 2, "green"}
-}
-
-slow_advance_and_shoot = {
-    {"hea", 0.75, 0.3},
-    {"wai", 30},
-    {"tar", 2, "green"},
-    {"wai", 30},
-    {"tar", 2, "green"},
-    {"wai", 30},
-    {"tar", 2, "green"},
-    {"wai", 30},
-    {"tar", 2, "green"},
-    {"wai", 30},
-    {"acc", 0.04, 1.5}
-}
-
 function process_brain(e)
     if e.brain_inst_pointer > #e.brain then
         return
     end
-    local inst = e.brain[e.brain_inst_pointer]
-    execute_inst(e, inst)
+    local cmd = e.brain[e.brain_inst_pointer]
+    local fn = cmd[1]
+    fn(e, cmd[2], cmd[3])
     e.brain_inst_pointer += 1
 end
 
-function process_brain2(e)
-    if e.cmd_idx > #e.commands then
-        return
-    end
-    local cmd = e.commands[e.cmd_idx]
-    local time = cmd[1]
-    local f = cmd[2]
-    local arg1 = cmd[3]
-    local arg2 = cmd[4]
-    if t == time then
-        f(e, arg1, arg2)
-        e.cmd_idx += 1
-    end
-end
-
+--ai commands
 function heading(enemy, angle, speed)
     enemy.accel = 0
     enemy.decel = 0
@@ -826,25 +750,87 @@ function target(enemy, speed, bullet_type)
     make_enemy_bullet(enemy.x, enemy.y, dx, dy, b)
 end
 
-function spray_bullets(e, num_bullets)
-    local s = e.bullet_sprayer
+function spray_bullets(enemy, num_bullets)
+    local s = enemy.bullet_sprayer
     s.angle = 0.6
     s.magazine = num_bullets
     s.shot_timer = 0
 end
 
-function fire_pattern(e)
+function fire_pattern(enemy)
     local angle = 0.55
     for i = 1, 5 do
         local dx = 1.5 * cos(angle)
         local dy = 1.5 * sin(angle)
-        make_enemy_bullet(e.x, e.y, dx, dy, green_orb)
+        make_enemy_bullet(enemy.x, enemy.y, dx, dy, green_orb)
         angle += 0.1
     end
 end
 
--->8
---spawner
+--enemy behaviors
+test_brain = {
+    {heading, 0.75, 0.5},
+    {fire_pattern, 10},
+    {wait, 90, nil},
+    {spray_bullets, 10},
+    {wait, 90},
+    {fire_pattern, 10},
+}
+
+flyin_flyout = {
+    {heading, 0.75, 1},
+    {wait, 10},
+    {target, 4, "blue"},
+    {wait, 2},
+    {target, 4, "blue"},
+    {wait, 2},
+    {target, 4, "blue"},
+    {wait, 16},
+    {decel, 0.04},
+    {wait, 30},
+    {fire_pattern},
+    {heading, 0.25, 0},
+    {accel, 0.04, 1},
+    {target, 4, "blue"},
+    {wait, 8},
+    {target, 4, "blue"},
+    {wait, 8},
+    {target, 4, "blue"},
+    {wait, 8},
+    {target, 4, "blue"}
+}
+
+stationary = {
+    {stop}
+}
+
+fly_left = {
+    {heading, 0.5, 1.5},
+    {wait, 10},
+    {target, 2, "green"}
+}
+
+fly_right = {
+    {heading, 0.0, 1.5},
+    {wait, 10},
+    {target, 2, "green"}
+}
+
+slow_advance_and_shoot = {
+    {heading, 0.75, 0.3},
+    {wait, 30},
+    {target, 2, "green"},
+    {wait, 30},
+    {target, 2, "green"},
+    {wait, 30},
+    {target, 2, "green"},
+    {wait, 30},
+    {target, 2, "green"},
+    {wait, 30},
+    {accel, 0.04, 1.5}
+}
+
+--event schedule
 schedule = {}
 
 function schedule_event(time, fn)
@@ -867,7 +853,7 @@ function process_schedule()
         end
     end
 end
--->8
+
 --waves
 function spawn_wave_left(y_coor)
     for i = 1, 4 do
@@ -892,7 +878,7 @@ function spawn_triplet(x_coor)
     add_intercepter(x_coor - 10, -8, flyin_flyout)
     add_intercepter(x_coor, -18, flyin_flyout)
 end
--->8
+
 --stages
 test_stage = {
     {
@@ -927,7 +913,6 @@ test_stage = {
     },
 }
 
--->8
 --utils
 function draw_animation(animation, x, y)
     local frames = animation.frames
