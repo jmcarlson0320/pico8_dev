@@ -687,13 +687,15 @@ end
 -->8
 --brain
 test_brain = {
-    {"hea", 0.75, 0.5},
-    {"spb", 10},
-    {"wai", 90},
-    {"spb", 10},
-    {"wai", 90},
-    {"spb", 10},
-    {"wai", 90}
+    {0, heading, {0.75, 0.5}},
+    {0, spray_bullets, {10}},
+    {90, spray_bullets, {10}},
+    {180, spray_bullets, {10}},
+}
+
+new_commands = {
+    {heading, {0.75, 1}},
+    {wait, {10}},
 }
 
 flyin_flyout = {
@@ -758,24 +760,18 @@ function process_brain(e)
     e.brain_inst_pointer += 1
 end
 
-function execute_inst(enemy, inst)
-    local opcode = inst[1]
-    if opcode == "hea" then
-        heading(enemy, inst[2], inst[3])
-    elseif opcode == "dec" then
-        decel(enemy, inst[2])
-    elseif opcode == "acc" then
-        accel(enemy, inst[2], inst[3])
-    elseif opcode == "sto" then
-        stop(enemy)
-    elseif opcode == "wai" then
-        wait(enemy, inst[2])
-    elseif opcode == "fir" then
-        fire(enemy, enemy.x, enemy.y, inst[2], inst[3])
-    elseif opcode == "tar" then
-        target(enemy, inst[2], inst[3])
-    elseif opcode == "spb" then
-        fire_pattern(enemy)
+function process_brain2(e)
+    if e.cmd_idx > #e.commands then
+        return
+    end
+    local cmd = e.commands[e.cmd_idx]
+    local time = cmd[1]
+    local f = cmd[2]
+    local arg1 = cmd[3]
+    local arg2 = cmd[4]
+    if t == time then
+        f(e, arg1, arg2)
+        e.cmd_idx += 1
     end
 end
 
@@ -787,14 +783,15 @@ function heading(enemy, angle, speed)
     enemy.max_speed = speed
 end
 
-function decel(enemy, val)
+function decel(enemy, rate, min_speed)
     enemy.accel = 0
-    enemy.decel = val
+    enemy.decel = rate
+    enemy.min_speed = min_speed
 end
 
-function accel(enemy, val, max_speed)
+function accel(enemy, rate, max_speed)
     enemy.decel = 0
-    enemy.accel = val
+    enemy.accel = rate
     enemy.max_speed = max_speed
 end
 
