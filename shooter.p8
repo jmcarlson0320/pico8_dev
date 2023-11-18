@@ -6,7 +6,6 @@ __lua__
 -- todo
 -- all enemy sprites should be bigger
 -- rotate enemy sprite based on dir
--- more enemy types
 -- player ship explosion
 -- power ups
 -- weapon component
@@ -15,7 +14,7 @@ __lua__
 
 function _init()
     t=0
-    init_sandbox()
+    init_title()
 end
 
 function _update()
@@ -78,7 +77,7 @@ function init_play()
     _drw = draw_play
     t = 0
     lives = 3
-    score = 10000
+    score = 0
     particles = {}
     missiles = {}
     enemies = {}
@@ -152,7 +151,31 @@ end
 -- enemies
 enemies = {}
 
-function add_intercepter(x, y, brain)
+interceptor = {
+    hp = 4,
+    score = 50,
+    sprite = 81,
+    hitbox = {
+        x0 = 0,
+        y0 = 0,
+        x1 = 7,
+        y1 = 6
+    }
+}
+
+striker = {
+    hp = 25,
+    score = 100,
+    sprite = 65,
+    hitbox = {
+        x0 = 0,
+        y0 = 0,
+        x1 = 7,
+        y1 = 6
+    }
+}
+
+function add_enemy(enemy_type, x, y, brain)
     local e = {}
     e.x = x
     e.y = y
@@ -161,16 +184,11 @@ function add_intercepter(x, y, brain)
     e.max_speed = 0
     e.decel = 0
     e.accel = 0
-    e.hp = 16
-    e.score = 10
-    e.sprite = 81
+    e.hp = enemy_type.hp
+    e.score = enemy_type.score
+    e.sprite = enemy_type.sprite
     e.drift_params = create_slow_drift()
-    e.hitbox = {
-        x0 = 0,
-        y0 = 0,
-        x1 = 7,
-        y1 = 6
-    }
+    e.hitbox = enemy_type.hitbox
     e.flash = 0
     e.brain = brain
     e.brain_inst_pointer = 1
@@ -186,6 +204,7 @@ end
 function update_enemy(e)
     if e.hp <= 0 then
         explode_enemy(e)
+        score += e.score
         return
     end
     if e.wait_timer > 0 then
@@ -858,7 +877,7 @@ end
 function spawn_wave_left(y_coor)
     for i = 1, 4 do
         local f = function()
-            add_intercepter(-8, y_coor + (i - 1) * 15, fly_right)
+            add_enemy(interceptor, -8, y_coor + (i - 1) * 15, fly_right)
         end
         schedule_event(t + (i - 1) * 15, f)
     end
@@ -867,16 +886,16 @@ end
 function spawn_wave_right(y_coor)
     for i = 1, 4 do
         local f = function()
-            add_intercepter(136, y_coor + (i - 1) * 15, fly_left)
+            add_enemy(interceptor, 136, y_coor + (i - 1) * 15, fly_left)
         end
         schedule_event(t + (i - 1) * 15, f)
     end
 end
 
 function spawn_triplet(x_coor)
-    add_intercepter(x_coor + 10, -8, flyin_flyout)
-    add_intercepter(x_coor - 10, -8, flyin_flyout)
-    add_intercepter(x_coor, -18, flyin_flyout)
+    add_enemy(striker, x_coor + 10, -8, flyin_flyout)
+    add_enemy(striker, x_coor - 10, -8, flyin_flyout)
+    add_enemy(striker, x_coor, -18, flyin_flyout)
 end
 
 --stages
