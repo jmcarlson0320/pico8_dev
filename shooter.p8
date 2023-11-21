@@ -30,24 +30,19 @@ end
 function init_sandbox()
     _upd = update_sandbox
     _drw = draw_sandbox
-    ship = {}
-    ship.x = 10
-    ship.y = 128
+    init_ship()
 end
 
 function update_sandbox()
-    if #enemies == 0 then
-        spawn_triplet(64)
-    end
-    foreach(enemies, update_enemy)
-    foreach(enemy_bullets, update_bullet)
+    update_ship()
 end
 
 function draw_sandbox()
     cls(0)
-    foreach(enemies, draw_enemy)
-    foreach(enemy_bullets, draw_enemy_bullet)
+    draw_ship()
     print("sandbox\n", 0, 0, 7)
+    print(ship.x)
+    print(ship.y)
 end
 
 -- title
@@ -155,6 +150,7 @@ interceptor = {
     hp = 4,
     score = 50,
     sprite = 81,
+    size = 1,
     hitbox = {
         x0 = 0,
         y0 = 0,
@@ -167,11 +163,25 @@ striker = {
     hp = 25,
     score = 100,
     sprite = 65,
+    size = 1,
     hitbox = {
         x0 = 0,
         y0 = 0,
         x1 = 7,
         y1 = 6
+    }
+}
+
+baddy = {
+    hp = 100,
+    score = 1000,
+    sprite = 70,
+    size = 2,
+    hitbox = {
+        x0 = 0,
+        y0 = 0,
+        x1 = 15,
+        y1 = 15
     }
 }
 
@@ -187,6 +197,7 @@ function add_enemy(enemy_type, x, y, brain)
     e.hp = enemy_type.hp
     e.score = enemy_type.score
     e.sprite = enemy_type.sprite
+    e.size = enemy_type.size
     e.drift_params = create_slow_drift()
     e.hitbox = enemy_type.hitbox
     e.flash = 0
@@ -246,7 +257,7 @@ function draw_enemy(e)
             pal(i, 7)
         end
     end
-    spr(e.sprite, e.x, e.y)
+    spr(e.sprite, e.x, e.y, e.size, e.size)
     pal()
 end
 
@@ -292,8 +303,9 @@ function init_ship()
     ship.x = 60
     ship.y = 112
     ship.dir = 0
+    ship.prev_dir = 0
     ship.lastdir = 0
-    ship.spd = 2
+    ship.spd = 3/2*1.414
     ship.sprites = {
         [1] = 33,
         [5] = 33,
@@ -318,7 +330,13 @@ function init_ship()
 end
 
 function update_ship()
+    ship.prev_dir = ship.dir
     ship.dir = get_dir_from_input()
+    if ship.dir != ship.prev_dir then
+        ship.x = flr(ship.x + 0.5)
+        ship.y = flr(ship.y + 0.5)
+    end
+
     ship.x += x_dir[ship.dir] * ship.spd
     ship.y += y_dir[ship.dir] * ship.spd
     ship.x = mid(0, ship.x, 120)
@@ -940,6 +958,9 @@ function draw_animation(animation, x, y)
     spr(frames[i], x, y)
 end
 
+function round(n)
+				return flr(n+0.5)
+end
 __gfx__
 000000000200080008000080008000200000000000008000000090000000a0000000a0000000a000000280000009900000000000000000000000000000000000
 00000000020008000800008000800020008080000000800000008000000090000000a00000009000000670000097790000000000000000000000000000000000
