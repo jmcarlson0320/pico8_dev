@@ -225,8 +225,12 @@ function update_enemy(e)
 end
 
 function rotate_enemy(e)
-    local delta = abs(e.rotation - e.heading)
-    if delta > e.turn_speed then
+    local delta = e.rotation - e.heading
+    if abs(delta) > 0.5 then
+        e.heading += delta / abs(delta)
+        delta = e.rotation - e.heading
+    end
+    if abs(delta) > e.turn_speed then
         if e.rotation < e.heading then
             e.rotation += e.turn_speed
         elseif e.rotation > e.heading then
@@ -266,6 +270,11 @@ function check_destroyed(e)
 end
 
 function draw_enemy(e)
+    spr_rot(e.sprite, e.rotation, e.x, e.y)
+    pal()
+end
+
+function draw_enemy_flames(e)
     local frames = { 89, 90, 91, 92 }
     local ticks_per_frame = 3
     local i = flr(t / ticks_per_frame % #frames) + 1
@@ -276,8 +285,6 @@ function draw_enemy(e)
             pal(i, 7)
         end
     end
-    spr_rot(e.sprite, e.rotation, e.x, e.y)
-    pal()
 end
 
 function update_bullet_sprayer(e)
@@ -782,7 +789,7 @@ function accel(enemy, rate, max_speed)
 end
 
 function stop(enemy)
-    enemy.heading = 0.0
+    enemy.heading = enemy.rotation
     enemy.speed = 0.0
     enemy.max_speed = 0.0
 end
@@ -1023,7 +1030,6 @@ function pd_rotate(x,y,rot,mx,my,w,flip,scale)
     tline(x-hx, py, x+hx, py, sx-ss*halfw, sy+cs*halfw, cs, ss)
     halfw+=1
   end
-  rect(x-hx,y-w,x+hx,y+w,5)
 end
 
 __gfx__
