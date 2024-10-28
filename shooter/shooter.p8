@@ -4,7 +4,6 @@ __lua__
 
 -- main
 -- todo
--- rotate enemy sprite based on dir
 -- player ship explosion
 -- stage 1, 2, 3
 -- title screen
@@ -30,19 +29,22 @@ end
 
 -- sandbox
 function init_sandbox()
+    ship.x = 64
+    ship.y = 64
     _upd = update_sandbox
     _drw = draw_sandbox
-    add_enemy(striker, 64, 64, 0.75, stationary)
 end
 
 function update_sandbox()
-    foreach(enemies, update_enemy)
+    if btnp(4) then
+        explode_player()
+    end
+    foreach(particles, update_particle)
 end
 
 function draw_sandbox()
     cls(0)
-    foreach(enemies, draw_enemy)
-    pset(64, 64, 8)
+    foreach(particles,draw_particle)
     print("sandbox\n", 0, 0, 7)
 end
 
@@ -80,7 +82,7 @@ function init_play()
     blaster_bullets = {}
     enemy_bullets = {}
     schedule = {}
-    schedule_event_list(test_stage, 0)
+    load_test_stage()
     init_ship()
 end
 
@@ -98,8 +100,6 @@ function update_play()
     enemy_player_collisions()
     if lives<=0 then
         init_gameover()
-    elseif btnp(4) then
-        init_play()
     end
 end
 
@@ -431,8 +431,14 @@ function fire_missile()
     end
 end
 
+function explode_player()
+    slow_explode(ship.x, ship.y)
+    smoke(ship.x + 4, ship.y + 2)
+    large_flash(ship.x + 4, ship.y + 2)
+end
+
 function reset_ship()
-    ship.invul = 30
+    ship.invul = 45
 end
 
 dir_code = { [0] = 0, 1, 2, 0, 3, 5, 6, 3, 4, 8, 7, 4, 0, 1, 2, 0 }
@@ -467,12 +473,13 @@ end
 function update_particle(p)
     if p.age > p.lifetime then
         del(particles, p)
-    else
-        p.age += 1
-        p.x += p.dx
-        p.y += p.dy
-        p.dy += p.ddy
+        return
     end
+
+    p.age += 1
+    p.x += p.dx
+    p.y += p.dy
+    p.dy += p.ddy
 end
 
 function draw_particle(p)
@@ -542,8 +549,24 @@ function smoke(x, y)
     end
 end
 
+function slow_explode(x, y)
+    for i = 1, 15 do
+        local p = {}
+        p.x = x + sin(rnd())*rnd()
+        p.y = y + sin(rnd())*rnd()
+        p.dx = rnd(2) - 1
+        p.dy = rnd(2) - 1
+        p.ddy = 0
+        p.lifetime = 15 + rnd(5)
+        p.age = 0
+        p.rad_tbl = {7}
+        p.col_tbl = {7, 6, 5}
+        add(particles, p)
+    end
+end
+
 function sparks(x, y)
-    for i = 1, 5 do
+    for i = 1, 15 do
         local p = {}
         p.x = x
         p.y = y
@@ -556,6 +579,9 @@ function sparks(x, y)
         p.col_tbl = { 7,10 }
         add(particles, p)
     end
+end
+
+function ship_explosion(x, y)
 end
 
 function make_starfield(n)
@@ -643,6 +669,7 @@ function make_enemy_bullet(x, y, dx, dy, bullet_type)
     b.animation = bullet_type.animation
     b.hitbox = bullet_type.hitbox
     add(enemy_bullets, b)
+    missle_trail(x, y)
 end
 
 function update_bullet(b)
@@ -708,46 +735,62 @@ function has_collided(a, b)
     return true
 end
 
-function bullet_enemy_collisions()
-    for b in all(blaster_bullets) do
-        for e in all(enemies) do
-            if has_collided(b, e) then
-                e.flash = 4
-                del(blaster_bullets, b)
-                sparks(e.x + 4, e.y + 2)
-                small_flash(e.x + 4, e.y + 2)
-                e.hp -= 4
-                sfx(3)
+function check_collisions_groups(group_a, group_b, callback)
+    for a in all(group_a) do
+        for b in all(group_b) do
+            if has_collided(a, b) then
+                callback(a, b)
             end
         end
     end
 end
 
-function bullet_player_collisions()
-    if ship.invul > 0 then return end
-    for b in all(enemy_bullets) do
-        if has_collided(b, ship) then
-            del(enemy_bullets, b)
-            sparks(ship.x + 4, ship.y + 2)
-            small_flash(ship.x + 4, ship.y + 2)
-            sfx(3)
-            reset_ship()
-            lives -=1
-            return
+function check_collisions_object_group(obj, group, callback, early_return)
+    for o in all(group) do
+        if has_collided(obj, o) then
+            callback(obj, o)
+            if early_return then
+                return
+            end
         end
     end
 end
 
-function enemy_player_collisions()
-    for e in all(enemies) do
-        if has_collided(e, ship) then
-            e.flash = 4
-            e.hp -= 2
-            reset_ship()
-            lives -= 1
-            return
-        end
+function bullet_enemy_collisions()
+    local function handle_bullet_enemy_collision(b, e)
+        e.flash = 4
+        del(blaster_bullets, b)
+        sparks(e.x + 4, e.y + 2)
+        small_flash(e.x + 4, e.y + 2)
+        e.hp -= 4
+        sfx(3)
     end
+
+    check_collisions_groups(blaster_bullets, enemies, handle_bullet_enemy_collision)
+end
+
+function bullet_player_collisions()
+    local function handle_player_bullet_collision(p, b)
+        del(enemy_bullets, b)
+        explode_player()
+        reset_ship()
+        lives -=1
+    end
+
+    if ship.invul > 0 then return end
+    check_collisions_object_group(ship, enemy_bullets, handle_player_bullet_collision, true)
+end
+
+function enemy_player_collisions()
+    local function handle_player_enemy_collision(p, e)
+        e.flash = 4
+        e.hp -= 2
+        explode_player()
+        reset_ship()
+        lives -= 1
+    end
+
+    check_collisions_object_group(ship, enemies, handle_player_enemy_collision, true)
 end
 
 --brain
@@ -836,7 +879,9 @@ function fire_pattern(enemy)
     end
 end
 
---enemy behaviors
+----------------------------------
+-- enemy behaviors
+----------------------------------
 test_brain = {
     {heading, 0.75, 0.5},
     {fire_pattern, 10},
@@ -1018,18 +1063,18 @@ function spr_rot(spr, angle, x, y)
 end
 
 function pd_rotate(x,y,rot,mx,my,w,flip,scale)
-  scale=scale or 1
-  w*=scale*4
+    scale=scale or 1
+    w*=scale*4
 
-  local cs, ss = cos(rot)*.125/scale,-sin(rot)*.125/scale
-  local sx, sy = mx+cs*-w, my+ss*-w
-  local hx = flip and -w or w
+    local cs, ss = cos(rot)*.125/scale,-sin(rot)*.125/scale
+    local sx, sy = mx+cs*-w, my+ss*-w
+    local hx = flip and -w or w
 
-  local halfw = -w
-  for py=y-w, y+w do
-    tline(x-hx, py, x+hx, py, sx-ss*halfw, sy+cs*halfw, cs, ss)
-    halfw+=1
-  end
+    local halfw = -w
+    for py=y-w, y+w do
+        tline(x-hx, py, x+hx, py, sx-ss*halfw, sy+cs*halfw, cs, ss)
+        halfw+=1
+    end
 end
 
 __gfx__

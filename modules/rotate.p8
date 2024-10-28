@@ -13,6 +13,7 @@ function _draw()
  cls()
  pd_rotate(64,64,a,0.5,0.5,1.7,false,1)
 end
+
 -->8
 --rotate sprite
 --97 tokens with scaling and arbitrary size
@@ -20,7 +21,7 @@ function pd_rotate(x,y,rot,mx,my,w,flip,scale)
   scale=scale or 1
   w*=scale*4
 
-  local cs, ss = cos(rot)*.125/scale,sin(rot)*.125/scale
+  local cs, ss = cos(rot)*.125/scale,-sin(rot)*.125/scale
   local sx, sy = mx+cs*-w, my+ss*-w
   local hx = flip and -w or w
 
