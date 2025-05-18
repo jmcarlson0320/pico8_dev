@@ -1,10 +1,11 @@
 pico-8 cartridge // http://www.pico-8.com
-version 41
+version 42
 __lua__
 
 -- main
--- todo
--- player ship explosion
+
+-- TODO
+-- create enemy patterns
 -- stage 1, 2, 3
 -- title screen
 -- high score screen
@@ -50,23 +51,103 @@ end
 
 -- title
 function init_title()
+
+    banner = {
+        x = 28,
+        y = 38,
+        colors = {0, 8, 12, 8, 0, 12},
+        color_idx = 1,
+        flashing = false
+    }
+
+    num_menu_items = 2
+    menu_selection = 0
+    menu_x_pos = 44
+    menu_y_pos = 66
+
+    in_transition = false
+    transition_timer = 0
+
     _upd = update_title
     _drw = draw_title
     stars = make_starfield(40)
 end
 
 function update_title()
-    foreach(stars,update_star)
     if btnp(4) or btnp(5) then
-        init_play()
+        if menu_selection == 0 then
+            in_transition = true
+            transition_timer = 30
+            banner.flashing = true
+        elseif menu_selection == 1 then
+            -- init_highscore()
+        end
+
     end
+
+    if btnp(2) and menu_selection > 0 then
+        menu_selection -= 1
+    end
+
+    if btnp(3) and menu_selection < num_menu_items - 1 then
+        menu_selection += 1
+    end
+
+    if in_transition then
+        if transition_timer <= 0 then
+            init_ready()
+        else
+            transition_timer -=1
+        end
+    end
+
+    foreach(stars,update_star)
 end
 
 function draw_title()
     cls(0)
     foreach(stars,draw_star)
-    print("title screen",50,50,7)
-    print("press ❎ or 🅾️ to start", 30, 58, 7)
+
+    for i = 1, 3 do
+        print("\^w\^tbot storm!", banner.x + i, banner.y + i, banner.colors[banner.color_idx])
+        banner.color_idx += 1
+        if banner.flashing then
+            mod_val = 5
+        else
+            mod_val = 3
+        end
+        if banner.color_idx > mod_val then
+            banner.color_idx = 1
+        end
+    end
+
+    print("play", menu_x_pos, menu_y_pos, 7)
+    print("best scores", menu_x_pos, menu_y_pos + 10, 7)
+    print("◆", menu_x_pos - 10, menu_y_pos + menu_selection * 10, 7)
+end
+
+function init_ready()
+    ready_timer = 110
+    blank_screen = true
+    _upd = update_ready
+    _drw = draw_ready
+end
+
+function update_ready()
+    ready_timer -= 1
+    if ready_timer <= 0 then
+        init_play()
+    elseif ready_timer <= 90 then
+        blank_screen = false
+    end
+end
+
+function draw_ready()
+    cls(0)
+    if (not blank_screen) then
+        print_cent("get ready!!!", 64, 7)
+        print(flr(ready_timer / 30) + 1, 64, 74, 7)
+    end
 end
 
 -- play
@@ -76,6 +157,7 @@ function init_play()
     t = 0
     lives = 3
     score = 0
+    stars = make_starfield(15)
     particles = {}
     missiles = {}
     enemies = {}
@@ -101,16 +183,19 @@ function update_play()
     if lives<=0 then
         init_gameover()
     end
+    if btnp(4) then
+        load_test_stage()
+    end
 end
 
 function draw_play()
     cls()
     foreach(stars,draw_star)
-    draw_ship()
     foreach(missiles,draw_missile)
     foreach(blaster_bullets,draw_blaster_bullet)
     foreach(enemy_bullets,draw_enemy_bullet)
     foreach(particles,draw_particle)
+    draw_ship()
     foreach(enemies,draw_enemy)
     draw_ui(4,4)
     print(#enemy_bullets)
@@ -316,8 +401,8 @@ end
 
 function create_slow_drift()
     local p = {
-        ax = 0.1, tx = 90, px = rnd(),
-        ay = 0.1, ty = 60, py = rnd()
+        ax = 0.2, tx = 60, px = rnd(),
+        ay = 0.1, ty = 30, py = rnd()
     }
     return p
 end
@@ -331,7 +416,7 @@ function init_ship()
     ship.dir = 0
     ship.prev_dir = 0
     ship.lastdir = 0
-    ship.spd = 3/2*1.414
+    ship.spd = 2*1.414
     ship.sprites = {
         [1] = 33,
         [5] = 33,
@@ -415,8 +500,10 @@ function fire_blaster()
         make_blaster_bullet(ship.x + 3, ship.y)
         small_flash(ship.x + 1, ship.y)
         small_flash(ship.x + 6, ship.y)
+        ship.blaster_timer = 4
         sfx(2)
-        ship.blaster_timer = 3
+        missle_trail(ship.x - 3, ship.y)
+        missle_trail(ship.x + 3, ship.y)
     end
 end
 
@@ -514,7 +601,7 @@ function small_flash(x, y)
     p.ddy = 0
     p.lifetime = 2
     p.age = 0
-    p.rad_tbl = { 5, 4, 3, 2, 0 }
+    p.rad_tbl = { 7, 6, 5, 2, 0 }
     p.col_tbl = { 7 }
     add(particles, p)
 end
@@ -566,14 +653,14 @@ function slow_explode(x, y)
 end
 
 function sparks(x, y)
-    for i = 1, 15 do
+    for i = 1, 5 do
         local p = {}
         p.x = x
         p.y = y
         p.dx = rnd(10) - 5
         p.dy = rnd(20) - 18
-        p.ddy = 0
-        p.lifetime = 5 + rnd(10)
+        p.ddy = 0.2
+        p.lifetime = rnd(5)
         p.age = 0
         p.rad_tbl = { 0 }
         p.col_tbl = { 7,10 }
@@ -591,7 +678,7 @@ function make_starfield(n)
         s.x = rnd(128)
         s.y = rnd(128)
         s.layer = flr(rnd(2)) + 1
-        s.dy = s.layer +5
+        s.dy = s.layer + 2 * s.layer
         add(starfield, s)
     end
     return starfield
@@ -654,7 +741,7 @@ function make_blaster_bullet(x, y)
     b.x = x
     b.y = y
     b.dx = 0
-    b.dy = -12
+    b.dy = -8
     b.sprite = blaster.sprite
     b.hitbox = blaster.hitbox
     add(blaster_bullets, b)
@@ -669,7 +756,9 @@ function make_enemy_bullet(x, y, dx, dy, bullet_type)
     b.animation = bullet_type.animation
     b.hitbox = bullet_type.hitbox
     add(enemy_bullets, b)
-    missle_trail(x, y)
+    for i = 1, 4 do
+        missle_trail(x, y)
+    end
 end
 
 function update_bullet(b)
@@ -793,7 +882,7 @@ function enemy_player_collisions()
     check_collisions_object_group(ship, enemies, handle_player_enemy_collision, true)
 end
 
---brain
+-- brain
 function process_brain(enemy)
     if enemy.wait_timer > 0 then
         enemy.wait_timer -= 1
@@ -810,7 +899,7 @@ function process_brain(enemy)
     enemy.brain_inst_pointer += 1
 end
 
---ai commands
+-- ai commands
 function heading(enemy, angle, speed)
     enemy.accel = 0
     enemy.decel = 0
@@ -853,12 +942,14 @@ function target(enemy, speed, bullet_type)
     local angle = atan2(to_target_x, to_target_y)
     local dx = cos(angle) * speed
     local dy = sin(angle) * speed
+
     local b
     if bullet_type == "blue" then
         b = blue_orb
     elseif bullet_type == "green" then
         b = green_orb
     end
+
     make_enemy_bullet(enemy.x, enemy.y, dx, dy, b)
 end
 
@@ -891,27 +982,28 @@ test_brain = {
     {fire_pattern, 10},
 }
 
-flyin_flyout = {
+flyin_flyout_left = {
     {heading, 0.75, 1},
-    {wait, 10},
-    {target, 4, "blue"},
-    {wait, 2},
-    {target, 4, "blue"},
-    {wait, 2},
-    {target, 4, "blue"},
-    {wait, 16},
+    {wait, 60},
     {decel, 0.04},
+    {target, 2, "blue"},
+    {heading, 0.50, 0},
+    {accel, 0.04, 1},
     {wait, 30},
-    {fire_pattern},
     {heading, 0.25, 0},
     {accel, 0.04, 1},
-    {target, 4, "blue"},
-    {wait, 8},
-    {target, 4, "blue"},
-    {wait, 8},
-    {target, 4, "blue"},
-    {wait, 8},
-    {target, 4, "blue"}
+}
+
+flyin_flyout_right = {
+    {heading, 0.75, 1},
+    {wait, 60},
+    {decel, 0.04},
+    {target, 2, "blue"},
+    {heading, 0.0, 0},
+    {accel, 0.04, 1},
+    {wait, 30},
+    {heading, 0.25, 0},
+    {accel, 0.04, 1},
 }
 
 stationary = {
@@ -931,17 +1023,13 @@ fly_right = {
 }
 
 slow_advance_and_shoot = {
-    {heading, 0.75, 0.3},
-    {wait, 30},
+    {heading, 0.75, 1},
+    {wait, 15},
     {target, 2, "green"},
-    {wait, 30},
+    {wait, 15},
     {target, 2, "green"},
-    {wait, 30},
-    {target, 2, "green"},
-    {wait, 30},
-    {target, 2, "green"},
-    {wait, 30},
-    {accel, 0.04, 1.5}
+    {wait, 5},
+    {accel, 0.02, 3}
 }
 
 --event schedule
@@ -995,44 +1083,76 @@ end
 
 --stages
 function load_test_stage()
+    t=0
     schedule = {}
-    schedule_event_list(test_stage, 0)
+    schedule_event_list(test_stage, 30)
 end
 
 test_stage = {
     {
         time = 1,
         fn = function()
-            spawn_wave_left(15)
+            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
+            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
+        end
+    },
+    {
+        time = 20,
+        fn = function()
+            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
+            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
+        end
+    },
+    {
+        time = 40,
+        fn = function()
+            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
+            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
         end
     },
     {
         time = 60,
         fn = function()
-            spawn_wave_right(15)
+            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
+            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
         end
     },
     {
         time = 120,
         fn = function()
-            spawn_triplet(64)
+            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
         end
     },
     {
-        time = 180,
+        time = 165,
         fn = function()
-            spawn_triplet(15)
+            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
         end
     },
     {
-        time = 240,
+        time = 210,
         fn = function()
-            spawn_triplet(104)
+            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
+            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
         end
     },
 }
 
---utils
+-- utils
 function draw_animation(animation, x, y)
     local frames = animation.frames
     local rate = animation.rate
@@ -1075,6 +1195,11 @@ function pd_rotate(x,y,rot,mx,my,w,flip,scale)
         tline(x-hx, py, x+hx, py, sx-ss*halfw, sy+cs*halfw, cs, ss)
         halfw+=1
     end
+end
+
+function print_cent(txt,y,color)
+    local offset=64-#txt*2
+    print(txt,offset,y,color)
 end
 
 __gfx__
