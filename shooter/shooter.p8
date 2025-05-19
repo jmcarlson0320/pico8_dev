@@ -7,8 +7,7 @@ __lua__
 -- TODO
 -- create enemy patterns
 -- stage 1, 2, 3
--- title screen
--- high score screen
+-- save highscores
 -- power ups
 -- weapon component
 -- other weapons
@@ -80,7 +79,7 @@ function update_title()
             transition_timer = 30
             banner.flashing = true
         elseif menu_selection == 1 then
-            -- init_highscore()
+            init_highscore()
         end
 
     end
@@ -126,6 +125,27 @@ function draw_title()
     print("◆", menu_x_pos - 10, menu_y_pos + menu_selection * 10, 7)
 end
 
+-- highscore
+function init_highscore()
+    _upd = update_highscore
+    _drw = draw_highscore
+end
+
+function update_highscore()
+    foreach(stars,update_star)
+    if btnp(4) or btnp(5) then
+        init_title()
+    end
+end
+
+function draw_highscore()
+    cls(0)
+    foreach(stars,draw_star)
+    print_cent("highscores", 0, 7)
+    print("1.\tjmc\t100000", 0, 10, 7)
+end
+
+-- ready
 function init_ready()
     ready_timer = 110
     blank_screen = true
@@ -134,19 +154,21 @@ function init_ready()
 end
 
 function update_ready()
+    foreach(stars,update_star)
     ready_timer -= 1
     if ready_timer <= 0 then
         init_play()
-    elseif ready_timer <= 90 then
+    elseif ready_timer < 90 then
         blank_screen = false
     end
 end
 
 function draw_ready()
     cls(0)
+    foreach(stars,draw_star)
     if (not blank_screen) then
-        print_cent("get ready!!!", 64, 7)
-        print(flr(ready_timer / 30) + 1, 64, 74, 7)
+        print_cent("get ready!!!", 54, 7)
+        print(flr(ready_timer / 30) + 1, 64, 104, 7)
     end
 end
 
@@ -411,8 +433,8 @@ end
 ship = {}
 
 function init_ship()
-    ship.x = 60
-    ship.y = 112
+    ship.x = 62
+    ship.y = 104
     ship.dir = 0
     ship.prev_dir = 0
     ship.lastdir = 0
