@@ -888,7 +888,9 @@ function bullet_player_collisions()
         lives -=1
     end
 
-    if ship.invul > 0 then return end
+    if ship.invul > 0 then
+        return
+    end
     check_collisions_object_group(ship, enemy_bullets, handle_player_bullet_collision, true)
 end
 
@@ -917,7 +919,9 @@ function process_brain(enemy)
 
     local cmd = enemy.brain[enemy.brain_inst_pointer]
     local fn = cmd[1]
-    fn(enemy, cmd[2], cmd[3])
+    local arg1 = cmd[2]
+    local arg2 = cmd[3]
+    fn(enemy, arg1, arg2)
     enemy.brain_inst_pointer += 1
 end
 
@@ -1125,34 +1129,13 @@ function load_test_stage()
 end
 
 test_stage = {
-    {
-        time = 1,
-        fn = spawn_pair
-    },
-    {
-        time = 20,
-        fn = spawn_pair
-    },
-    {
-        time = 40,
-        fn = spawn_pair
-    },
-    {
-        time = 60,
-        fn = spawn_pair
-    },
-    {
-        time = 120,
-        fn = spawn_line
-    },
-    {
-        time = 165,
-        fn = spawn_line
-    },
-    {
-        time = 210,
-        fn = spawn_line
-    },
+    { time = 1, fn = spawn_pair },
+    { time = 20, fn = spawn_pair },
+    { time = 40, fn = spawn_pair },
+    { time = 60, fn = spawn_pair },
+    { time = 120, fn = spawn_line },
+    { time = 165, fn = spawn_line },
+    { time = 210, fn = spawn_line },
 }
 
 -- utils
