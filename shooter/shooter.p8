@@ -1103,6 +1103,20 @@ function spawn_triplet(x_coor)
     add_enemy(striker, x_coor, -18, 0.75, flyin_flyout)
 end
 
+function spawn_pair()
+    add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
+    add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
+end
+
+function spawn_line()
+    add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
+    add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
+    add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
+    add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
+    add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
+    add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
+end
+
 --stages
 function load_test_stage()
     t=0
@@ -1113,64 +1127,31 @@ end
 test_stage = {
     {
         time = 1,
-        fn = function()
-            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
-            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
-        end
+        fn = spawn_pair
     },
     {
         time = 20,
-        fn = function()
-            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
-            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
-        end
+        fn = spawn_pair
     },
     {
         time = 40,
-        fn = function()
-            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
-            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
-        end
+        fn = spawn_pair
     },
     {
         time = 60,
-        fn = function()
-            add_enemy(striker, 40, -8, 0.75, flyin_flyout_left)
-            add_enemy(striker, 88, -8, 0.75, flyin_flyout_right)
-        end
+        fn = spawn_pair
     },
     {
         time = 120,
-        fn = function()
-            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
-        end
+        fn = spawn_line
     },
     {
         time = 165,
-        fn = function()
-            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
-        end
+        fn = spawn_line
     },
     {
         time = 210,
-        fn = function()
-            add_enemy(interceptor, 15, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 35, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 54, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 74, -16, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 92, -8, 0.75, slow_advance_and_shoot)
-            add_enemy(interceptor, 113, -8, 0.75, slow_advance_and_shoot)
-        end
+        fn = spawn_line
     },
 }
 
